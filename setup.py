@@ -11,7 +11,7 @@ setup(
     packages=find_packages(where="src"),
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/shiau109/PYQUM_data",
+    url="https://github.com/shiau109/QCAT",
     author="Li-Chieh, Hsiao",
     author_email="shiau109@gmail.com",
     license="MIT",
