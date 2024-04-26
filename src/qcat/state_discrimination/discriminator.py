@@ -73,7 +73,10 @@ class Discriminator():
 
     def get_state_population( self, data ):
         self.get_prediction(data)
-        return np.bincount(self.__predict_label)
+        s_pop = np.bincount(self.__predict_label)
+        if s_pop.shape[-1] == 1:
+            s_pop =  np.append(s_pop, [0])
+        return s_pop
 
 def train_model( data ):
     """
@@ -88,7 +91,8 @@ def train_model( data ):
     training_data = data.reshape(new_shape)
     my_model = Discriminator()
     my_model.import_training_data(training_data.transpose())
-    my_model.relabel_model(data[0])
+
+    my_model.relabel_model(np.array([data[0][0],data[1][0]]))
     return my_model
 
 from lmfit.models import GaussianModel

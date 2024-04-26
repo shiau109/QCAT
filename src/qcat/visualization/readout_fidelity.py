@@ -52,8 +52,10 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
 
     # scatter prepare 0 plot
     p0_data = dataset["single_shot"].sel(state=0).values
+    print(p0_data.shape)
     _plot_iq_shots(p0_data[0],p0_data[1],dist_model.get_prediction(p0_data.transpose()),ax_iq_0)
     prepare_0_dist = dist_model.get_state_population(p0_data.transpose())
+    print(prepare_0_dist)
     prepare_0_dist = prepare_0_dist/np.sum(prepare_0_dist)
 
     ax_iq_0.text(0.07,0.9,f"P(0|0)={prepare_0_dist[0]:.3f}", fontsize = 20, transform=ax_iq_0.transAxes)
@@ -75,7 +77,7 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
 
     pos = get_proj_distance(centers,centers.transpose())
     dis = np.abs(pos[1]-pos[0])
-    make_distribution( pos, np.array([sigma_0,sigma_1]), get_proj_distance(centers,p0_data), 0, ax_hist_0)
+    probability_p0 = make_distribution( pos, np.array([sigma_0,sigma_1]), get_proj_distance(centers,p0_data), 0, ax_hist_0)
     make_distribution( pos, np.array([sigma_0,sigma_1]), get_proj_distance(centers,p1_data), 1, ax_hist_1)
 
     snr = dis/sigma
@@ -83,6 +85,14 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
     fig.text(0.05,0.3,f"IQ distance/STD={dis:.2f}/{sigma:.2f}", fontsize = 20)
     fig.text(0.05,0.25,f"Voltage SNR={snr:.2f}", fontsize = 20)
     fig.text(0.05,0.20,f"Power SNR={np.log10(snr)*20:.2f} dB", fontsize = 20)
+    
+    if frequency != None:
+        p01 = probability_p0[1]
+        print(p01)
+        n = p01/(1-2*p01)
+        HDB = (1.0546/1.3806) *1e-11 # 1.0546e-34 / 1.3806e-23
+        effective_T = frequency*2*np.pi*HDB/np.log(1+1/n)
+        fig.text(0.05,0.15,f"Effective temperature (mK)={effective_T*1000:.1f}", fontsize = 20)
 
     if output != None :
         full_path = f"{output}.png"
@@ -177,10 +187,13 @@ def make_distribution( mu, sigma, data, prepare_state:int, ax):
     ax.set_yscale('log')
     ax.set_ylim(1e-3,est_peak_h*2)
     peak_value = np.array([results.params["g0_amplitude"].value, results.params["g1_amplitude"].value])
-    probability = peak_value/np.sum(peak_value)
+    area = peak_value * sigma/np.sqrt(2*np.pi)
+    probability = area/np.sum(area)
     ax.text(0.07,0.9,f"P({prepare_state}|0)={probability[0]:.3f}", fontsize = 20, transform=ax.transAxes)
     ax.text(0.07,0.8,f"P({prepare_state}|1)={probability[1]:.3f}", fontsize = 20, transform=ax.transAxes)
     ax.set_xlabel('Projected Voltage Signal', fontsize=20)
+
+    return probability
 
 def make_histogram(bin_center, data, ax):
     """
