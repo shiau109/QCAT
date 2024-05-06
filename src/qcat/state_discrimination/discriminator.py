@@ -78,7 +78,7 @@ class Discriminator():
             s_pop =  np.append(s_pop, [0])
         return s_pop
 
-def train_model( data ):
+def train_GMModel( data ):
     """
     data type
     3 dim with shape (2*2*N)
@@ -102,80 +102,64 @@ class Discriminator1D():
     def __init__( self ):
         gm0 = GaussianModel(prefix="g0_", name="g0")
         gm1 = GaussianModel(prefix="g1_", name="g1")
-        model = gm0 + gm1
-        self.__model = GaussianMixture(n_components=2, random_state=0)
+        self.__model = gm0 + gm1
 
     @property
     def model( self )->GaussianMixture:
         return self.__model
 
-    def import_training_data( self, data ):
+    def import_training_data( self, data, guess=None, fixed_guess=False ):
         """
-        input numpy array with shape (n,2)
-        n is point number
+        input numpy array with shape (2,N)
+        shape[0]: state
+        shape[1]: N element is point number
         """
         self.training_data = data
-        self.__model.fit(data)
-        self.__model.weights_ = [0.5,0.5]
+        if isinstance(type(guess),type(None)):
+            mu, sigma = guess
+        else:
+            mu = np.mean(data, axis=1)
+            sigma = np.std( data, axis=1 )
 
-        # return self
-    def relabel_model( self, ground_data ):
-        """
-        input numpy array with shape (2,n)
-        """
+        sigma_mean = np.mean( sigma )
 
-        gp = np.array([np.mean(ground_data, axis=1)])
-        # print( gp )
-        # print( gp.shape )
+        dis = np.abs(mu[1]-mu[0])
+        est_peak_h = 1/sigma_mean
+        bin_center = np.linspace(-(dis+2.5*sigma_mean), dis+2.5*sigma_mean,50)
 
-        # print(self.__model.predict( gp ))
-        if self.__model.predict( gp ) == 1:
-            self.__model.means_ = np.flip(self.__model.means_,0)
-            self.__model.weights_ = np.flip(self.__model.weights_,0)
-            self.__model.covariances_ = np.flip(self.__model.covariances_,0)
-            self.__model.precisions_cholesky_ = np.flip(self.__model.precisions_cholesky_,0)
+        width = bin_center[1] -bin_center[0]
+        bins = np.append(bin_center,bin_center[-1]+width) -width/2
 
+        hist, bin_edges = np.histogram(data, bins, density=True)
 
-    def output_paras( self ):
-        """
-        four para in dict
-        means
-        weights
-        covariances
-        precisions_cholesk
-        """
-        output_dict = {
-            "means":self.__model.means_,
-            "weights":self.__model.weights_,
-            "covariances":self.__model.covariances_,
-            "precisions_cholesky":self.__model.precisions_cholesky_,
-        }
+        self.__model.set_param_hint('g0_center',value=mu[0], vary=fixed_guess)
+        self.__model.set_param_hint('g1_center',value=mu[1], vary=fixed_guess)
+        self.__model.set_param_hint('g0_amplitude',min=0, max=est_peak_h*2, vary=True)
+        self.__model.set_param_hint('g1_amplitude',min=0, max=est_peak_h*2, vary=True)
+        self.__model.set_param_hint('g0_sigma',value=sigma[0], vary=fixed_guess)
+        self.__model.set_param_hint('g1_sigma',value=sigma[1], vary=fixed_guess)
 
-        return output_dict
+        params = self.__model.make_params()
+        self._results = self.__model.fit(hist,params,x=bin_center)
 
-    def rebuild_model( self, paras:dict ):
+        return self._results
 
-        self.__model.means_ = paras["means"]
-        self.__model.weights_ = paras["weights"]
-        self.__model.covariances_ = paras["covariances"]
-        self.__model.precisions_cholesky_ = paras["precisions_cholesky"]
-
-
-    def get_prediction( self, data ):
+    def get_prediction( self, x, data ):
         """
         input numpy array with shape (n,2)
         n is point number
         """
-        self.__predict_label = self.model.predict( data )
-        return self.__predict_label
+        params = self.__model.make_params()
+        return self.__model.fit(data,params,x=x)
 
-    def get_label( self ):
-        """
-        input numpy array with shape (n,2)
-        n is point number
-        """
-
-        return self.__predict_label
-
-    def get_state_population( self ):
-        return np.bincount(self.__predict_label)
+def train_1DGaussianModel( training_data, fixed_guess=None )->Discriminator1D:
+    """
+    data type
+    3 dim with shape (2*2*N)
+    shape[0] is prepare state
+    shape[1] is N times single shot
+    
+    """
+    my_model = Discriminator1D()
+    my_model.import_training_data( training_data, guess=fixed_guess)
+    return my_model
