@@ -1,37 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
-raw_data = np.load(r'D:\Data\DR2_5Q\1u_Q2Z1_crosstalk_ramsey_20240118_1419.npz', allow_pickle=True)# ["arr_0"].item()
-# tomo_data =
-other_info = {}
-for k, v in raw_data.items():
-    print(k, v.shape)
-    if k in ["paras","setting"]:
-        other_info[k]=v.item()
-
-for k, v in other_info.items():
-    print(k)
-
-d_z_target_amp = other_info["paras"]["d_z_target_amp"]
-d_z_crosstalk_amp = other_info["paras"]["d_z_crosstalk_amp"]
 
 
+# # Apply Gaussian smoothing
+# from scipy.ndimage import gaussian_filter
+# sigma = 1.0  # Adjust the standard deviation based on your needs
+# smoothed_data = gaussian_filter(data, sigma=sigma)
 
 
-# Create a 2D numpy array (example data)
-data = raw_data["q2_ro"][0]
-offset = np.mean(data)
-print(offset)
-data -= offset
-
-
-
-# Apply Gaussian smoothing
-from scipy.ndimage import gaussian_filter
-sigma = 1.0  # Adjust the standard deviation based on your needs
-smoothed_data = gaussian_filter(data, sigma=sigma)
-
-
-print(data.shape, d_z_target_amp.shape, d_z_crosstalk_amp.shape)
 # M, N = data.shape
 
 def get_freq_axes( axes ):
@@ -58,11 +33,10 @@ def get_weighted_pos( data, axes ):
     f_z_c_range = axes[1][edge_min_idx[1]:edge_max_idx[1]+1]
     f_z_t_range_new = np.linspace(f_z_t_range[0],f_z_t_range[-1],10)
     f_z_c_range_new = np.linspace(f_z_c_range[0],f_z_c_range[-1],10)
-    print(partial_amp.shape, f_z_t_range.shape, f_z_c_range.shape)
-    print(f_z_c_range)
+    # print(partial_amp.shape, f_z_t_range.shape, f_z_c_range.shape)
     interp = RegularGridInterpolator((f_z_t_range, f_z_c_range), partial_amp, method="cubic",
                                      fill_value=None, bounds_error=False)
-    print(f_z_t_range, f_z_t_range_new)
+    # print(f_z_t_range, f_z_t_range_new)
     tv, cv = np.meshgrid(f_z_t_range_new, f_z_c_range_new, indexing="ij")
     f_z_target_pos, f_z_crosstalk_pos = get_max_pos(interp((tv, cv)), [f_z_t_range_new, f_z_c_range_new])
 
@@ -116,43 +90,29 @@ def get_interp( data, axes:list, extend_num = 50 ):
 
     return extended_data, ext_axes
 
-data, axes = get_extend(data, [d_z_target_amp, d_z_crosstalk_amp], 100)
-# data, axes = get_interp(data, [d_z_target_amp, d_z_crosstalk_amp], 100)
+def get_fft_mag( data ):
+    # Compute the 2D Fourier Transform
+    fft_result = np.fft.fft2(data)
+    # Shift zero frequency components to the center
+    fft_result_shifted = np.fft.fftshift(fft_result)
+    # Compute the magnitude spectrum (absolute values)
+    magnitude_spectrum = np.abs(fft_result_shifted)
+    return magnitude_spectrum
 
+def analysis_crosstalk_value( z1, z2, data ):
+    offset = np.mean(data)
+    data -= offset
+    data, axes = get_extend(data, [z1, z2], 100)
+    # data, axes = get_interp(data, [d_z_target_amp, d_z_crosstalk_amp], 100)
 
-f_axes = get_freq_axes( axes )
+    f_axes = get_freq_axes( axes )
+    magnitude_spectrum = get_fft_mag(data)
+    # f_z_target_pos, f_z_crosstalk_pos = get_weighted_pos(magnitude_spectrum, f_axes )
+    f_z_target_pos, f_z_crosstalk_pos = get_max_pos(magnitude_spectrum, f_axes)
+    z_slope = f_z_target_pos/f_z_crosstalk_pos
+    crosstalk = -1/z_slope
+    print(f"k space: {z_slope}")
+    print(f"crosstalk: {crosstalk}")
 
-# Compute the 2D Fourier Transform
-fft_result = np.fft.fft2(data)
+    return crosstalk, f_axes, magnitude_spectrum
 
-# Shift zero frequency components to the center
-fft_result_shifted = np.fft.fftshift(fft_result)
-
-# Compute the magnitude spectrum (absolute values)
-magnitude_spectrum = np.abs(fft_result_shifted)
-
-get_max_pos(magnitude_spectrum, f_axes)
-# f_z_target_pos, f_z_crosstalk_pos = get_weighted_pos(magnitude_spectrum, f_axes )
-f_z_target_pos, f_z_crosstalk_pos = get_max_pos(magnitude_spectrum, f_axes)
-z_slope = f_z_target_pos/f_z_crosstalk_pos
-
-print(f"z_slope: {z_slope}, {-1/z_slope}")
-# Display the original image and its Fourier Transform
-# plt.figure(figsize=(4, 8))
-
-fig, ax = plt.subplots(ncols=2)
-fig.set_size_inches(10, 5)
-ax[0].pcolormesh(axes[1]*1000, axes[0]*1000, data, cmap='gray')
-ax[0].plot([d_z_crosstalk_amp[0]*1000,d_z_crosstalk_amp[-1]*1000],[-d_z_crosstalk_amp[0]/z_slope*1000,-d_z_crosstalk_amp[-1]/z_slope*1000],color="r",linewidth=5)
-ax[0].set_title('Original Image')
-ax[0].set_xlabel(f"Q1 Delta Voltage (mV)")
-ax[0].set_ylabel(f"Q2 Delta Voltage (mV)")
-# plt.pcolormesh(f_z_crosstalk, f_z_target, np.log1p(magnitude_spectrum), cmap='gray')  # Use log scale for better visualization
-ax[1].pcolormesh(f_axes[1]/1000, f_axes[0]/1000, magnitude_spectrum, cmap='gray')  # Use log scale for better visualization
-ax[1].plot([-f_z_crosstalk_pos/1000,f_z_crosstalk_pos/1000],[-f_z_target_pos/1000,f_z_target_pos/1000],"o",color="r",markersize=5)
-ax[1].plot([-f_z_crosstalk_pos/1000,f_z_crosstalk_pos/1000],[-f_z_target_pos/1000,f_z_target_pos/1000],color="r",linewidth=1)
-ax[1].set_xlabel(f"Q1 wavenumber (1/mV)")
-ax[1].set_ylabel(f"Q2 wavenumber (1/mV)")
-ax[1].set_title('2D Fourier Transform (Magnitude Spectrum)')
-
-plt.show()
