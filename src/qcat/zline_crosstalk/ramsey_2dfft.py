@@ -54,10 +54,8 @@ def get_max_pos( data, axes ):
     max_indices = np.unravel_index(max_index, data.shape)
     f_z_target_pos = axes[0][max_indices[0]]
     f_z_crosstalk_pos = axes[1][max_indices[1]]
-    print(max_indices)
     print("Maximum value:", data[max_indices])
-    print(f"f_z_target: {axes[0][max_indices[0]]}")
-    print(f"f_z_crosstalk: {axes[1][max_indices[1]]}")
+
     return f_z_target_pos, f_z_crosstalk_pos
 
 def get_extend( data, axes:list, extend_num = 50 ):
@@ -100,15 +98,23 @@ def get_fft_mag( data ):
     return magnitude_spectrum
 
 def analysis_crosstalk_value( z1, z2, data ):
+    """
+    z1 is shape (N,),  crosstalk voltage (other)\n
+    z2 is shape (M,), compensation voltage (self)\n
+    data with shape (N,M)
+    """
     offset = np.mean(data)
     data -= offset
+
     data, axes = get_extend(data, [z1, z2], 100)
     # data, axes = get_interp(data, [d_z_target_amp, d_z_crosstalk_amp], 100)
-
+    # print(axes[0].shape, axes[1].shape, data.shape)
     f_axes = get_freq_axes( axes )
     magnitude_spectrum = get_fft_mag(data)
-    # f_z_target_pos, f_z_crosstalk_pos = get_weighted_pos(magnitude_spectrum, f_axes )
-    f_z_target_pos, f_z_crosstalk_pos = get_max_pos(magnitude_spectrum, f_axes)
+    #  get_weighted_pos(magnitude_spectrum, f_axes )
+    f_z_crosstalk_pos, f_z_target_pos = get_max_pos(magnitude_spectrum, f_axes)
+    print(f"f_z_target: {f_z_crosstalk_pos}")
+    print(f"f_z_crosstalk: {f_z_target_pos}")
     z_slope = f_z_target_pos/f_z_crosstalk_pos
     crosstalk = -1/z_slope
     print(f"k space: {z_slope}")
