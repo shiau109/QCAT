@@ -52,10 +52,8 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
 
     # scatter prepare 0 plot
     p0_data = dataset["single_shot"].sel(state=0).values
-    print(p0_data.shape)
     _plot_iq_shots(p0_data[0],p0_data[1],trained_GMModel.get_prediction(p0_data.transpose()),ax_iq_0)
     prepare_0_dist = trained_GMModel.get_state_population(p0_data.transpose())
-    print(prepare_0_dist)
     prepare_0_dist = prepare_0_dist/np.sum(prepare_0_dist)
 
     ax_iq_0.text(0.07,0.9,f"P(0|0)={prepare_0_dist[0]:.3f}", fontsize = 20, transform=ax_iq_0.transAxes)
@@ -78,8 +76,12 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
     
     # project to 1D
     print(centers)
-    pos = get_proj_distance(centers.transpose(),centers.transpose())
-    train_data_proj = get_proj_distance(centers.transpose(), dataset["single_shot"].values)
+    pos = get_proj_distance(centers.transpose(),centers.transpose()).real 
+    print(pos)
+    # training_iqdata = dataset["single_shot"].values
+
+
+    train_data_proj = get_proj_distance(centers.transpose(), data) 
 
     dis = np.abs(pos[1]-pos[0])
     bin_center = np.linspace(-(dis+2.5*sigma), dis+2.5*sigma,50)
@@ -91,10 +93,11 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
     # Histogram plot
     hist_0, _ = np.histogram(train_data_proj[0], bins, density=True)
     hist_1, _ = np.histogram(train_data_proj[1], bins, density=True)
-
     # Fit with GaussianModel
-    print((pos,[sigma_0,sigma_1]))
+    # print((pos,[sigma_0,sigma_1]))
     trained_1DGModel = train_1DGaussianModel( train_data_proj, (pos,[sigma_0,sigma_1]) )
+    trained_1DGModel._results.fit_report()
+
     p0_result = trained_1DGModel.get_prediction(bin_center,hist_0)
     p1_result = trained_1DGModel.get_prediction(bin_center,hist_1)
     print(p0_result.fit_report(),p1_result.fit_report())
@@ -211,7 +214,7 @@ def _plot_histogram(bin_center, data, ax):
 
 
 def _plot_gaussian_fit_curve(xdata, result:ModelResult, ax):
-    # ax.plot(xdata, result.init_fit, '-', label='init fit')     
+    # ax.plot(xdata, result.init_fit, '-', label='init fit') 
     ax.plot(xdata, result.best_fit, '--', color="black", label='best fit', linewidth=2)
 
     # popt, pcov = curve_fit(double_gaussian, xdata, ydata, p0=guess)
@@ -227,6 +230,7 @@ def _plot_gaussian_fit_curve(xdata, result:ModelResult, ax):
     pars['center'].set(value=result.params["g1_center"].value)
     pars['amplitude'].set(value=result.params["g1_amplitude"].value)
     pars['sigma'].set(value=result.params["g1_sigma"].value) 
+
     gm.eval(pars, x=xdata)    
     ax.plot(xdata, gm.eval(pars, x=xdata), '--', color="r",label='state 1', linewidth=2)
 
@@ -236,9 +240,11 @@ def get_proj_distance( proj_pts:np.ndarray, iq_data ):
     proj_pts with shape (2,2)\n
     shape[0] is IQ\n
     shape[1] is state\n
-    iq_data with shape (2,N)\n
+    iq_data with shape (2,N,M...)\n
     shape[0] is IQ\n
     shape[1] is point idx\n
+    Return
+    with shape (N,M...)
     """
     # Matrix method
     # p0 = proj_pts[0]
@@ -256,11 +262,9 @@ def get_proj_distance( proj_pts:np.ndarray, iq_data ):
 
     z_pos = proj_pts[0]+1j*proj_pts[1]
     z_dir = z_pos[1]-z_pos[0]
-    # print(z_pos, z_dir)
-    # print("AAAAAAAAAAAAAA")
-    # print(np.angle(z_dir), np.angle(z_dir)/np.pi*180)
+
 
     z_data = iq_data[0]+1j*iq_data[1]
-    projectedDistance = z_data*np.exp( -1j*np.angle(z_dir) ).real 
+    projectedDistance = z_data*np.exp( -1j*np.angle(z_dir) )
 
-    return projectedDistance
+    return projectedDistance.real

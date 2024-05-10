@@ -108,15 +108,19 @@ class Discriminator1D():
     def model( self )->GaussianMixture:
         return self.__model
 
-    def import_training_data( self, data, guess=None, fixed_guess=False ):
+    def import_training_data( self, data, guess=None, guess_vary=False ):
         """
         input numpy array with shape (2,N)
         shape[0]: state
         shape[1]: N element is point number
         """
+        
         self.training_data = data
-        if isinstance(type(guess),type(None)):
+        print("guess",guess)
+
+        if not isinstance(type(guess),type(None)):
             mu, sigma = guess
+            print("mu, sigma", mu, sigma)
         else:
             mu = np.mean(data, axis=1)
             sigma = np.std( data, axis=1 )
@@ -125,19 +129,20 @@ class Discriminator1D():
 
         dis = np.abs(mu[1]-mu[0])
         est_peak_h = 1/sigma_mean
+        print("est_peak_h",est_peak_h)
         bin_center = np.linspace(-(dis+2.5*sigma_mean), dis+2.5*sigma_mean,50)
 
         width = bin_center[1] -bin_center[0]
         bins = np.append(bin_center,bin_center[-1]+width) -width/2
 
-        hist, bin_edges = np.histogram(data, bins, density=True)
+        hist, bin_edges = np.histogram(data.flatten(), bins, density=True)
 
-        self.__model.set_param_hint('g0_center',value=mu[0], vary=fixed_guess)
-        self.__model.set_param_hint('g1_center',value=mu[1], vary=fixed_guess)
-        self.__model.set_param_hint('g0_amplitude',min=0, max=est_peak_h*2, vary=True)
-        self.__model.set_param_hint('g1_amplitude',min=0, max=est_peak_h*2, vary=True)
-        self.__model.set_param_hint('g0_sigma',value=sigma[0], vary=fixed_guess)
-        self.__model.set_param_hint('g1_sigma',value=sigma[1], vary=fixed_guess)
+        self.__model.set_param_hint('g0_center',value=mu[0], vary=guess_vary)
+        self.__model.set_param_hint('g1_center',value=mu[1], vary=guess_vary)
+        self.__model.set_param_hint('g0_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
+        self.__model.set_param_hint('g1_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
+        self.__model.set_param_hint('g0_sigma',value=sigma[0], vary=guess_vary)
+        self.__model.set_param_hint('g1_sigma',value=sigma[1], vary=guess_vary)
 
         params = self.__model.make_params()
         self._results = self.__model.fit(hist,params,x=bin_center)
@@ -152,14 +157,15 @@ class Discriminator1D():
         params = self.__model.make_params()
         return self.__model.fit(data,params,x=x)
 
-def train_1DGaussianModel( training_data, fixed_guess=None )->Discriminator1D:
+def train_1DGaussianModel( training_data, guess=None )->Discriminator1D:
     """
     data type
-    3 dim with shape (2*2*N)
+    3 dim with shape (2*N)
     shape[0] is prepare state
     shape[1] is N times single shot
     
     """
     my_model = Discriminator1D()
-    my_model.import_training_data( training_data, guess=fixed_guess)
+    # combined_training_data = training_data.reshape((2*training_data.shape[-1]))
+    my_model.import_training_data( training_data, guess=guess, guess_vary=False)
     return my_model
