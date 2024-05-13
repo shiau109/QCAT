@@ -77,6 +77,52 @@ class Discriminator():
         if s_pop.shape[-1] == 1:
             s_pop =  np.append(s_pop, [0])
         return s_pop
+    
+    def output_1D_paras( self ):
+        sigma_0 = get_sigma(self.__model.covariances_[0])
+        sigma_1 = get_sigma(self.__model.covariances_[1])
+        sigmas = np.array([sigma_0,sigma_1]) 
+        centers = self.__model.means_    
+        return centers, sigmas
+    
+def get_sigma( covariances ):
+    v, w = np.linalg.eigh(covariances)
+    v = np.sqrt(v/2)
+    return  np.sqrt(v[0]**2+v[1]**2)
+
+def get_proj_distance( proj_pts:np.ndarray, iq_data ):
+    """
+    proj_pts with shape (2,2)\n
+    shape[0] is IQ\n
+    shape[1] is state\n
+    iq_data with shape (2,N,M...)\n
+    shape[0] is IQ\n
+    shape[1] is point idx\n
+    Return
+    with shape (N,M...)
+    """
+    # Matrix method
+    # p0 = proj_pts[0]
+    # p1 = proj_pts[1]
+    # ref_point = (p0+p1)/2
+    # shifted_iq = iq_data.transpose()-ref_point
+    # v_01 = p1 -p0 
+
+    # v_01_dis = np.sqrt( v_01[0]**2 +v_01[1]**2 )
+
+    # shifted_iq = shifted_iq.transpose()
+    # v_01 = np.array([v_01])
+    # projectedDistance = v_01@shifted_iq/v_01_dis
+    # return projectedDistance[0]
+
+    z_pos = proj_pts[0]+1j*proj_pts[1]
+    z_dir = z_pos[1]-z_pos[0]
+
+
+    z_data = iq_data[0]+1j*iq_data[1]
+    projectedDistance = z_data*np.exp( -1j*np.angle(z_dir) )
+
+    return projectedDistance.real
 
 def train_GMModel( data ):
     """
@@ -149,13 +195,30 @@ class Discriminator1D():
 
         return self._results
 
-    def get_prediction( self, x, data ):
+    def fit_distribution( self, data, bin_center=None ):
         """
-        input numpy array with shape (n,2)
+        input numpy array with shape (n,)
         n is point number
         """
+
+        if type(bin_center) == type(None):
+            sigma = np.array([self._results.params["g0_sigma"],self._results.params["g1_sigma"]])
+            pos = np.array([self._results.params["g0_center"],self._results.params["g1_center"]])
+            bin_center = np.linspace(pos[0]-5.*sigma[0], pos[1]+5.*sigma[1],100)
+
+        width = bin_center[1] -bin_center[0]
+        bins = np.append(bin_center,bin_center[-1]+width) -width/2
+        hist, _ = np.histogram(data, bins, density=True)
         params = self.__model.make_params()
-        return self.__model.fit(data,params,x=x)
+        result = self.__model.fit(hist,params,x=bin_center)
+        return bin_center, hist, result
+    
+def get_probability( result ):
+    sigma = np.array([ result.params["g0_sigma"], result.params["g1_sigma"]])
+    peak_value = np.array([ result.params["g0_amplitude"], result.params["g1_amplitude"]])
+    area = peak_value * sigma*np.sqrt(2*np.pi)
+    probability = area/np.sum(area) 
+    return probability
 
 def train_1DGaussianModel( training_data, guess=None )->Discriminator1D:
     """
@@ -169,3 +232,14 @@ def train_1DGaussianModel( training_data, guess=None )->Discriminator1D:
     # combined_training_data = training_data.reshape((2*training_data.shape[-1]))
     my_model.import_training_data( training_data, guess=guess, guess_vary=False)
     return my_model
+
+def p01_to_Teff( p01, frequency ):
+    """
+    Parameters:\n
+    frequency unit in Hz
+    """
+    n = p01/(1-2*p01)
+    HDB = (1.0546/1.3806) *1e-11 # 1.0546e-34 / 1.3806e-23
+    effective_T = frequency*2*np.pi*HDB/np.log(1+1/n)
+
+    return effective_T

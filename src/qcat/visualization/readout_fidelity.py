@@ -3,7 +3,7 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from qcat.state_discrimination.discriminator import train_GMModel, train_1DGaussianModel
+from qcat.state_discrimination.discriminator import get_proj_distance, train_GMModel, train_1DGaussianModel, p01_to_Teff, get_probability, get_sigma
 def plot_readout_fidelity( data, frequency=None, output=None ):
 
     """
@@ -78,29 +78,19 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
     print(centers)
     pos = get_proj_distance(centers.transpose(),centers.transpose()).real 
     print(pos)
-    # training_iqdata = dataset["single_shot"].values
-
+    dis = np.abs(pos[1]-pos[0])
 
     train_data_proj = get_proj_distance(centers.transpose(), data) 
 
-    dis = np.abs(pos[1]-pos[0])
-    bin_center = np.linspace(-(dis+2.5*sigma), dis+2.5*sigma,50)
-    width = bin_center[1] -bin_center[0]
-    bins = np.append(bin_center,bin_center[-1]+width) -width/2
 
-
-
-    # Histogram plot
-    hist_0, _ = np.histogram(train_data_proj[0], bins, density=True)
-    hist_1, _ = np.histogram(train_data_proj[1], bins, density=True)
-    # Fit with GaussianModel
-    # print((pos,[sigma_0,sigma_1]))
+    # # Histogram plot
     trained_1DGModel = train_1DGaussianModel( train_data_proj, (pos,[sigma_0,sigma_1]) )
     trained_1DGModel._results.fit_report()
 
-    p0_result = trained_1DGModel.get_prediction(bin_center,hist_0)
-    p1_result = trained_1DGModel.get_prediction(bin_center,hist_1)
-    print(p0_result.fit_report(),p1_result.fit_report())
+    bin_center, hist_0, p0_result = trained_1DGModel.fit_distribution(train_data_proj[0])
+    bin_center, hist_1, p1_result = trained_1DGModel.fit_distribution(train_data_proj[1])
+ 
+    # print(p0_result.fit_report(),p1_result.fit_report())
     plot_1Ddistribution( bin_center, hist_0, p0_result, 0, ax_hist_0)
     plot_1Ddistribution( bin_center, hist_1, p1_result, 1, ax_hist_1)
 
@@ -113,15 +103,10 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
     
     if frequency != None:
 
-        sigma = np.array([trained_1DGModel._results.params["g0_sigma"],trained_1DGModel._results.params["g1_sigma"]])
-        peak_value = np.array([trained_1DGModel._results.params["g0_amplitude"], trained_1DGModel._results.params["g1_amplitude"]])
-        area = peak_value * sigma*np.sqrt(2*np.pi)
-        probability = area/np.sum(area)   
-        p01 = probability[0]
+        probability = get_probability(p0_result)
+        p01 = probability[1]
         print(p01)
-        n = p01/(1-2*p01)
-        HDB = (1.0546/1.3806) *1e-11 # 1.0546e-34 / 1.3806e-23
-        effective_T = frequency*2*np.pi*HDB/np.log(1+1/n)
+        effective_T = p01_to_Teff(p01, frequency)
         fig.text(0.05,0.15,f"Effective temperature (mK)={effective_T*1000:.1f}", fontsize = 20)
 
     if output != None :
@@ -161,10 +146,7 @@ def make_ellipses(gmm, ax):
         ax.add_artist(ell)
         ax.set_aspect("equal", "datalim")
 
-def get_sigma( covariances ):
-    v, w = np.linalg.eigh(covariances)
-    v = np.sqrt(v/2)
-    return  np.sqrt(v[0]**2+v[1]**2)
+
 
 def _plot_iq_shots( idata, qdata, label, ax ):
     """
@@ -235,36 +217,3 @@ def _plot_gaussian_fit_curve(xdata, result:ModelResult, ax):
     ax.plot(xdata, gm.eval(pars, x=xdata), '--', color="r",label='state 1', linewidth=2)
 
 
-def get_proj_distance( proj_pts:np.ndarray, iq_data ):
-    """
-    proj_pts with shape (2,2)\n
-    shape[0] is IQ\n
-    shape[1] is state\n
-    iq_data with shape (2,N,M...)\n
-    shape[0] is IQ\n
-    shape[1] is point idx\n
-    Return
-    with shape (N,M...)
-    """
-    # Matrix method
-    # p0 = proj_pts[0]
-    # p1 = proj_pts[1]
-    # ref_point = (p0+p1)/2
-    # shifted_iq = iq_data.transpose()-ref_point
-    # v_01 = p1 -p0 
-
-    # v_01_dis = np.sqrt( v_01[0]**2 +v_01[1]**2 )
-
-    # shifted_iq = shifted_iq.transpose()
-    # v_01 = np.array([v_01])
-    # projectedDistance = v_01@shifted_iq/v_01_dis
-    # return projectedDistance[0]
-
-    z_pos = proj_pts[0]+1j*proj_pts[1]
-    z_dir = z_pos[1]-z_pos[0]
-
-
-    z_data = iq_data[0]+1j*iq_data[1]
-    projectedDistance = z_data*np.exp( -1j*np.angle(z_dir) )
-
-    return projectedDistance.real
