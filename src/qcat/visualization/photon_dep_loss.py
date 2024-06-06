@@ -18,8 +18,8 @@ default_plot_style = {
 }
 plt.rcParams['axes.labelsize'] = 20
 plt.rcParams['axes.titlesize'] = 22
-plt.rcParams['xtick.labelsize'] = 14
-plt.rcParams['ytick.labelsize'] = 14
+plt.rcParams['xtick.labelsize'] = 20
+plt.rcParams['ytick.labelsize'] = 20
 
 def plot_cavityS21_fitting(freq:np.ndarray, raw:np.ndarray, fit:np.ndarray, dependency:np.ndarray, title=None, output_fd=None):
     
@@ -452,7 +452,7 @@ def plot_multiRes_powerQ_free( import_folder, assignment:pd.DataFrame, output=No
         if output != None :
             plt.savefig(f"{output}/all_result_{xy_cols[i][1]}_free.png")    
    
-def plot_multiRes_powerQ_refined( import_folder, assignment:pd.DataFrame, output=None ):
+def plot_multiRes_powerQ_refined( import_folder, assignment:pd.DataFrame, output=None, xy_axis=None ):
     
     xy_cols = [("photons","Qi_dia_corr_fqc","Qi_dia_corr_err"),
         ("photons","Qc_dia_corr_fixed","absQc_err"),
@@ -460,20 +460,23 @@ def plot_multiRes_powerQ_refined( import_folder, assignment:pd.DataFrame, output
     # plot_list = assemble_plot_df(power_dep,xy_cols)
     y_labels = ["Internal Q", "Coupling Q", "Loaded Q"]
     for i, xy_col in enumerate(xy_cols):
-        fig, ax = _plot_multiRes_powerQ_flex(xy_col, assignment, import_folder, "refined_result")
+        fig, ax = _plot_multiRes_powerQ_flex(xy_col, assignment, import_folder, "refined_result", xy_axis)
         ax.set_ylabel(y_labels[i])
-        fig.legend()
+        fig.legend(fontsize=16,loc='upper right', bbox_to_anchor=(1, 0.9))
         fig.suptitle(f'All Resonator (Refined)')
 
         #plt.show()
         if output != None :
             plt.savefig(f"{output}/all_result_{xy_cols[i][1]}_refined.png")
 
-def _plot_multiRes_powerQ_flex( xy_col, assignment, import_folder, file_name ):
+def _plot_multiRes_powerQ_flex( xy_col, assignment, import_folder, file_name, xy_axis=None ):
 
     fig, ax = _plotFrame_multiRes_powerQ()
-    # ax.set_ylabel(y_labels[i])
-
+    if not (xy_axis is None):
+        ax.set_xlim(xy_axis[0][0],xy_axis[0][1])
+        ax.set_ylim(xy_axis[1][0],xy_axis[1][1])
+    ax.tick_params(axis='both', labelsize=20)
+    
     for label in assignment['measurement_label'].to_numpy():
         print(f"ploting {label}")
         file_path = f"{import_folder}/{label}/{file_name}.csv"
@@ -498,7 +501,7 @@ def _add_plot_multiRes_powerQ( data:pd.DataFrame, asi, ax:plt.Axes):
 
 def _plotFrame_multiRes_powerQ( )->Tuple[plt.Figure,plt.Axes]:
 
-    fig = plt.figure(facecolor='white',figsize=(20,9))
+    fig = plt.figure(facecolor='white',figsize=(10,8))
 
     ax = fig.subplots()
     # ax_amp.xaxis.set_major_locator(plt.MaxNLocator(2))
@@ -508,7 +511,7 @@ def _plotFrame_multiRes_powerQ( )->Tuple[plt.Figure,plt.Axes]:
     
     fig.subplots_adjust(left=0.15,
                         bottom=0.15, 
-                        right=0.9, 
+                        right=0.8, 
                         top=0.9, 
                         wspace=0.25, 
                         hspace=0.25)

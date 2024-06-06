@@ -62,6 +62,7 @@ class ResonatorData():
         fit_results["A"] = amp_norm
         fit_results["alpha"] = alpha
         fit_results["delay"] = delay
+        fit_results["input_power"] = self.power
 
         input_power = self.power
         if input_power != None:
@@ -104,12 +105,11 @@ class PhotonDepResonator():
             r_data = ResonatorData( freq*1e9, zdata_2d[i], p )
             self.resonator_data.append( r_data )
 
-    def import_array( self, power, freq, s21 ):
+    def import_array( self, freq, s21, power=None ):
 
         mk_power = power
-        for i, p in enumerate(mk_power):
-            r_data = ResonatorData( freq*1e9, s21[i], p )
-            self.resonator_data.append( r_data )
+        r_data = ResonatorData( freq, s21, mk_power )
+        self.resonator_data.append( r_data )
 
 
     def free_analysis( self, output_fd ):
@@ -119,8 +119,8 @@ class PhotonDepResonator():
         alldata_results = []
         alldata_plot = []
         alldata_power = []
-        for r_data in self.resonator_data:
-
+        for i, r_data in enumerate(self.resonator_data):
+            print(f"{i} th")
             df_fitParas, zdatas_norm, fitCurves_norm = r_data.fit()
             alldata_results.append(df_fitParas)
             alldata_power.append(r_data.power)
@@ -130,9 +130,9 @@ class PhotonDepResonator():
         df_powerQ_results.Name = self.name
 
         ## Save result
+        save_power_dep(df_powerQ_results, f"{output_fd}/free_result.csv")
         colors = plt.cm.rainbow(np.linspace(0, 1, len(alldata_power)))
         plot_resonatorFitting( alldata_power, alldata_plot, f"{self.name}_free", colors, output_fd=output_fd)
-        save_power_dep(df_powerQ_results, f"{output_fd}/free_result.csv")
 
         return df_powerQ_results
     
@@ -154,8 +154,8 @@ class PhotonDepResonator():
         df_fitResult_fixed = pd.DataFrame(alldata_results)
         df_fitResult_fixed.Name = self.name
         ## Save result
+        save_power_dep(df_fitResult_fixed, f"{output_fd}/refined_result.csv")
         colors = plt.cm.rainbow(np.linspace(0, 1, len(alldata_power)))
         plot_resonatorFitting( alldata_power, alldata_plot, f"{self.name}_refined", colors, output_fd=output_fd)
-        save_power_dep(df_fitResult_fixed, f"{output_fd}/refined_result.csv")
 
         return df_fitResult_fixed
