@@ -27,6 +27,7 @@ def check_configure( sample_fdname, subfd_names ):
                 print(f"Subfolder {subfd} is initialized!")
             else:
                 print(f"Results for this sample Exist!")
+
 def create_subfolder( main_fd, sub_fd ):
     fullpath_sub_fd = f"{main_fd}/{sub_fd}"
     if not exists(fullpath_sub_fd):
@@ -51,10 +52,10 @@ def check_file_extension( fd_name:str, file_ext:str ):
     filename_list = []
     for f in listdir(fd_name):
         fullname = f.split(".")
-        extension = fullname[1]
+        extension = fullname[-1]
         name = fullname[0]
-        if len(fullname) == 2 and fullname[1] == file_ext and isfile(join(fd_name, f)):
-            filename_list.append(name)
+        if extension == file_ext and isfile(join(fd_name, f)):
+            filename_list.append(f)
     
     return filename_list
 
@@ -83,11 +84,11 @@ def check_subgroup( filename_list, delimiter='_' ):
 
 def save_power_dep( df:DataFrame, output_name ):
     
-    condi_1 = (df["Qi_dia_corr_err"] / df["Qi_dia_corr"] > 0.4) | (df["Qi_dia_corr"] < 0) #|(df["Qi_dia_corr_err"] < 1e8)
-    condi_2 = (df["absQc_err"] / df["absQc"] > 0.4) | (df["absQc"] < 0)
-    condi_3 = (df["Ql_err"] / df["Ql"] > 0.4) | (df["Ql"] < 0)
-    indexNames = df[(condi_1 | condi_2 | condi_3)].index 
-    df.drop(indexNames , inplace=True)
+    # condi_1 = (df["Qi_dia_corr_err"] / df["Qi_dia_corr"] > 1.0) #| (df["Qi_dia_corr"] < 0) #|(df["Qi_dia_corr_err"] < 1e8)
+    # condi_2 = (df["absQc_err"] / df["absQc"] > 1.0) | (df["absQc"] < 0)
+    # condi_3 = (df["Ql_err"] / df["Ql"] > 1.0) | (df["Ql"] < 0)
+    # indexNames = df[(condi_1 | condi_2 | condi_3)].index 
+    # df.drop(indexNames , inplace=True)
     df.to_csv(output_name, index=False)  
 
 def save_tanloss( df:DataFrame, output_name ):
