@@ -81,9 +81,10 @@ class Discriminator():
     def output_1D_paras( self ):
         sigma_0 = get_sigma(self.__model.covariances_[0])
         sigma_1 = get_sigma(self.__model.covariances_[1])
-        sigmas = np.array([sigma_0,sigma_1]) 
-        centers = self.__model.means_    
-        return centers, sigmas
+        sigmas_1d = np.array([sigma_0,sigma_1]) 
+        centers = self.__model.means_ 
+        # centers_1d = get_proj_distance(centers.transpose(), centers.transpose())    
+        return centers, sigmas_1d
     
 def get_sigma( covariances ):
     v, w = np.linalg.eigh(covariances)
@@ -162,11 +163,11 @@ class Discriminator1D():
         """
         
         self.training_data = data
-        print("guess",guess)
+        # print("guess",guess)
 
         if not isinstance(type(guess),type(None)):
             mu, sigma = guess
-            print("mu, sigma", mu, sigma)
+            # print("mu, sigma", mu, sigma)
         else:
             mu = np.mean(data, axis=1)
             sigma = np.std( data, axis=1 )
@@ -175,9 +176,10 @@ class Discriminator1D():
 
         dis = np.abs(mu[1]-mu[0])
         est_peak_h = 1/sigma_mean
-        print("est_peak_h",est_peak_h)
-        bin_center = np.linspace(-(dis+2.5*sigma_mean), dis+2.5*sigma_mean,50)
 
+        # print("est_peak_h",est_peak_h)
+        
+        bin_center = np.linspace(-(dis+2.5*sigma_mean), dis+2.5*sigma_mean,50)
         width = bin_center[1] -bin_center[0]
         bins = np.append(bin_center,bin_center[-1]+width) -width/2
 

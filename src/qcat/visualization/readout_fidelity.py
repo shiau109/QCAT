@@ -68,23 +68,15 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
     ax_iq_1.text(0.07,0.8,f"P(1|1)={prepare_1_dist[1]:.3f}", fontsize = 20, transform=ax_iq_1.transAxes)
 
     # Histogram plot
-    # 1D gaussian distribution guess from GMM 
-    sigma_0 = get_sigma(trained_GMModel.output_paras()["covariances"][0])
-    sigma_1 = get_sigma(trained_GMModel.output_paras()["covariances"][1])
-    sigma = np.max( np.array([sigma_0,sigma_1]) )
-    centers = trained_GMModel.output_paras()["means"]
-    
-    # project to 1D
-    print(centers)
-    pos = get_proj_distance(centers.transpose(),centers.transpose()).real 
-    print(pos)
-    dis = np.abs(pos[1]-pos[0])
-
+    centers, sigmas = trained_GMModel.output_1D_paras()
     train_data_proj = get_proj_distance(centers.transpose(), data) 
+    pos = get_proj_distance(centers.transpose(), centers.transpose()) 
+    dis = np.abs(pos[1]-pos[0])
+    sigma = np.max( sigmas )
 
-
+    
     # # Histogram plot
-    trained_1DGModel = train_1DGaussianModel( train_data_proj, (pos,[sigma_0,sigma_1]) )
+    trained_1DGModel = train_1DGaussianModel( train_data_proj, (pos, sigmas)  )
     trained_1DGModel._results.fit_report()
 
     bin_center, hist_0, p0_result = trained_1DGModel.fit_distribution(train_data_proj[0])

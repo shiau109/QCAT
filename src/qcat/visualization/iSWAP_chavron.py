@@ -3,6 +3,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
 from qcat.coupling.iswap import fft_chavron, get_main_tone
+
 def rotate_data(data, iq_rotate=0):
     idata = data[0]
     qdata = data[1]
@@ -16,7 +17,7 @@ def plot_iSWAP_analysis_result( data, tuning ,time, output=None  ):
     
 
     fig, ax = plt.subplots(2)
-
+    ax[0].set_ylim( 0, 250)
     _plot_iSWAP_chavron(data.transpose(), tuning, time, ax[0])
 
     fft_mag, freq = fft_chavron( time, data )
@@ -45,6 +46,6 @@ def _plot_iSWAP_chavron( data, tuning, time, ax:plt.Axes ):
     # ax[0].legend()
 
 def _plot_chavron_fft( data, tuning, freq, main_freq, ax:plt.Axes ):
-    ax.plot( tuning, main_freq, 'o' )
+    ax.plot( tuning, main_freq, 'o', ms=2 )
     ax.pcolormesh( tuning, freq, data, cmap='gray')  # Use logarithmic scaling for better visibility
 

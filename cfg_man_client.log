@@ -1,0 +1,70 @@
+2024-04-26 12:29:50,303 note  | 
+2024-04-26 12:29:50,303 note  | --- Qblox Configuration Manager version 0.2.0 ---
+2024-04-26 12:29:50,303 note  | 
+2024-04-26 12:29:50,303 note  | Parsing update file "C:\Users\shiau\Downloads\update.tar.gz"...
+2024-04-26 12:29:50,832 note  | Found update file for cluster_mm, cluster_qcm, cluster_qrm, cluster_qtm
+2024-04-26 12:29:50,832 info  |   Update file              : C:\Users\shiau\Downloads\update.tar.gz
+2024-04-26 12:29:50,832 info  |   File format              : multi
+2024-04-26 12:29:50,832 info  |   Minimum client version   : None
+2024-04-26 12:29:50,832 info  |   Query message            : None
+2024-04-26 12:29:50,835 info  |   Contains updates for     : 4 product(s)
+2024-04-26 12:29:50,835 info  |     Model                  : cluster_mm
+2024-04-26 12:29:50,835 info  |       Application version  : 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       FPGA firmware version: 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       Kernel module version: 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       Cfg. manager version : 0.3.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |     Model                  : cluster_qcm
+2024-04-26 12:29:50,835 info  |       Application version  : 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       FPGA firmware version: 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       Kernel module version: 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       Cfg. manager version : 0.3.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |     Model                  : cluster_qrm
+2024-04-26 12:29:50,835 info  |       Application version  : 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       FPGA firmware version: 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       Kernel module version: 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,835 info  |       Cfg. manager version : 0.3.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,836 info  |     Model                  : cluster_qtm
+2024-04-26 12:29:50,836 info  |       Application version  : 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,836 info  |       FPGA firmware version: 0.1.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,836 info  |       Kernel module version: 0.7.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,836 info  |       Cfg. manager version : 0.3.0, built on 2024-03-09T00:11:34 from git hash 52f6cfa5
+2024-04-26 12:29:50,836 note  | 
+2024-04-26 12:29:50,836 note  | Trying to connect to "192.168.1.13"...
+2024-04-26 12:29:50,836 info  | Resolving device identifier "192.168.1.13"...
+2024-04-26 12:29:50,836 info  | "192.168.1.13" is a valid IP address; skipping name resolution.
+2024-04-26 12:29:50,836 info  | Trying to connect to application (port 5025)...
+2024-04-26 12:29:50,974 note  | "192.168.1.13" is reachable via 192.168.1.13:5025 using SCPI
+2024-04-26 12:29:50,974 info  |   Connecting to            : 192.168.1.13
+2024-04-26 12:29:50,974 info  |   Via protocol             : SCPI, via TCP port 5025
+2024-04-26 12:29:50,974 info  |   Configuration scope      : entire instrument
+2024-04-26 12:29:50,974 info  |   Server version           : 0.3.0
+2024-04-26 12:29:50,974 info  |   Client version           : 0.2.0
+2024-04-26 12:29:50,976 info  |   -------------------------:-------------------------
+2024-04-26 12:29:50,976 info  |   Device type              : qblox cluster_mm
+2024-04-26 12:29:50,976 info  |   Device name              : cluster-mm
+2024-04-26 12:29:50,976 info  |   Serial number            : 00015_2406_015
+2024-04-26 12:29:50,976 info  |   IP configuration         : 192.168.1.13/24
+2024-04-26 12:29:50,976 info  |   Submodule types          : cluster_qcm, cluster_qrm
+2024-04-26 12:29:50,976 info  |   Application version      : 0.6.2, built on 2023-11-08T19:53:26 from git hash cbd2a738
+2024-04-26 12:29:50,976 info  |   FPGA firmware version    : 0.6.2, built on 2023-11-08T19:53:26 from git hash cbd2a738
+2024-04-26 12:29:50,976 info  |   Kernel module version    : 0.6.2, built on 2023-11-08T19:53:26 from git hash cbd2a738
+2024-04-26 12:29:50,976 info  |   Config. manager version  : 0.3.0, built on 2023-11-08T19:53:26 from git hash cbd2a738
+2024-04-26 12:29:50,976 note  | 
+2024-04-26 12:29:50,976       | Operations to be performed:
+2024-04-26 12:29:50,976       |  - update('C:\\Users\\shiau\\Downloads\\update.tar.gz')
+2024-04-26 12:29:50,976       |  - reboot()
+2024-04-26 12:29:50,976       | 
+2024-04-26 12:29:50,976       | On the following devices:
+2024-04-26 12:29:50,976       |  - qblox cluster_mm at address 192.168.1.13:5025 (whole instrument), with serial 00015_2406_015 and name cluster-mm
+2024-04-26 12:29:50,976       | 
+2024-04-26 12:29:50,976       | More information is available in the log file (cfg_man_client.log).
+2024-04-26 12:29:50,976       | 
+2024-04-26 12:29:50,976       | Do you want to continue? [Y/N]
+2024-04-26 12:29:53,666       | 
+2024-04-26 12:29:53,666 note  | Proceeding with qblox cluster_mm at address 192.168.1.13:5025 (whole instrument), with serial 00015_2406_015 and name cluster-mm...
+2024-04-26 12:29:53,710 note  | Calling update on 192.168.1.13:5025...
+2024-04-26 12:30:48,870 note  | Calling reboot on 192.168.1.13:5025...
+2024-04-26 12:30:48,895 note  | Done with 192.168.1.13:5025.
+2024-04-26 12:30:48,896 note  | 
+2024-04-26 12:30:48,896 note  | Completed successfully.
+2024-04-26 12:30:48,896 info  | Closing all registered instruments
