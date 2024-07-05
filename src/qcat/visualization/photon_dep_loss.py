@@ -4,7 +4,7 @@ import pandas as pd
 from typing import List, Tuple
 from matplotlib.gridspec import GridSpec
 import numpy as np
-from qcat.resonator.photon_dep.analysis_method import *
+from qcat.analysis.resonator.photon_dep.analysis_method import *
 import copy
 default_plot_style = {
     "marker_style":"o",
