@@ -29,11 +29,19 @@ def qubit_relaxation_fitting( time, data )->ModelResult:
     # max_val = np.max(data)
     # min_val = np.min(data)
     params['amp'].set(data[0]-data[-1])#, vary=False)
-    params['offset'].set(data[-1])
+    params['offset'].set(averaging(data,6))
     params['tau'].set(guess_tau(time,data), min=0, max=time[-1]) 
 
     result = model.fit(data, params, t=time)
     return result
+
+def averaging(data, n_avg):
+    value = 0
+    for i in range(n_avg):
+        value += data[-i]
+        if n_avg != 0:
+            return i/n_avg
+        else: return 1
 
 def qubit_relaxation_statistic( time, data:np.ndarray ):
     """
