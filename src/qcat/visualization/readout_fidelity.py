@@ -3,8 +3,10 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from qcat.state_discrimination.discriminator import get_proj_distance, train_GMModel, train_1DGaussianModel, p01_to_Teff, get_probability, get_sigma
-def plot_readout_fidelity( data, frequency=None, output=None ):
+
+from qcat.analysis.state_discrimination.discriminator import get_proj_distance, train_GMModel, train_1DGaussianModel, p01_to_Teff, get_probability, get_sigma
+def plot_readout_fidelity( data, frequency=None, output=None, plot=True, detail_output:bool=False):
+
 
     """
     Parameters:\n
@@ -68,7 +70,9 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
     ax_iq_1.text(0.07,0.8,f"P(1|1)={prepare_1_dist[1]:.3f}", fontsize = 20, transform=ax_iq_1.transAxes)
 
     # Histogram plot
+
     centers, sigmas = trained_GMModel.output_1D_paras()
+
     train_data_proj = get_proj_distance(centers.transpose(), data) 
     pos = get_proj_distance(centers.transpose(), centers.transpose()) 
     dis = np.abs(pos[1]-pos[0])
@@ -97,17 +101,30 @@ def plot_readout_fidelity( data, frequency=None, output=None ):
 
         probability = get_probability(p0_result)
         p01 = probability[1]
-        print(p01)
+        
         effective_T = p01_to_Teff(p01, frequency)
         fig.text(0.05,0.15,f"Effective temperature (mK)={effective_T*1000:.1f}", fontsize = 20)
-
+    else:
+        probability = get_probability(p0_result)
+        p01 = probability[1]
+        effective_T = 0
     if output != None :
         full_path = f"{output}.png"
         print(f"Saving plot at {full_path}")
         fig.savefig(f"{full_path}")
+        if plot:
+            plt.show()
+        else:
+             plt.close()
     else:
-        plt.show()
-    return fig
+        if plot:
+            plt.show()
+        else:
+            plt.close()
+    if detail_output:
+        return fig, p01, effective_T*1000, np.log10(snr)*20
+    else:
+        return fig
 
 import matplotlib as mpl
 colors = ["blue", "red"]
