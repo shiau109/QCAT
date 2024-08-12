@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
-from qcat.state_discrimination.discriminator import get_proj_distance, train_GMModel, train_1DGaussianModel, p01_to_Teff, get_probability, get_sigma
+from qcat.analysis.state_discrimination.discriminator import get_proj_distance, train_GMModel, train_1DGaussianModel, p01_to_Teff, get_probability, get_sigma
 def plot_readout_fidelity( data, frequency=None, output=None, plot=True ):
 
 
@@ -105,6 +105,8 @@ def plot_readout_fidelity( data, frequency=None, output=None, plot=True ):
         effective_T = p01_to_Teff(p01, frequency)
         fig.text(0.05,0.15,f"Effective temperature (mK)={effective_T*1000:.1f}", fontsize = 20)
     else:
+        probability = get_probability(p0_result)
+        p01 = probability[1]
         effective_T = 0
     if output != None :
         full_path = f"{output}.png"
@@ -112,39 +114,41 @@ def plot_readout_fidelity( data, frequency=None, output=None, plot=True ):
         fig.savefig(f"{full_path}")
         if plot:
             plt.show()
+        else:
+             plt.close()
     else:
         if plot:
             plt.show()
         else:
             plt.close()
-    return fig, effective_T*1000, np.log10(snr)*20
+    return fig, p01, effective_T*1000, np.log10(snr)*20
 
 import matplotlib as mpl
 colors = ["blue", "red"]
 
 def make_ellipses(gmm, ax):
     for n, color in enumerate(colors):
-        # match gmm.covariance_type:
-        #     case "full":
-        #         covariances = gmm.covariances_[n][:2, :2]
-        #     case "tied":
-        #         covariances = gmm.covariances_[:2, :2]
-        #     case "diag":
-        #         covariances = np.diag(gmm.covariances_[n][:2])
-        #     case "spherical":
-        #         covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
-        #     case _:
-        #         covariances = gmm.covariances_[n][:2, :2]
-        if gmm.covariance_type == 'full':
-            covariances = gmm.covariances_[n][:2, :2]
-        elif gmm.covariance_type == "tied":
-                covariances = gmm.covariances_[:2, :2]
-        elif gmm.covariance_type == "diag":
-                covariances = np.diag(gmm.covariances_[n][:2])
-        elif gmm.covariance_type == "spherical":
-                covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
-        else:
+        match gmm.covariance_type:
+            case "full":
                 covariances = gmm.covariances_[n][:2, :2]
+            case "tied":
+                covariances = gmm.covariances_[:2, :2]
+            case "diag":
+                covariances = np.diag(gmm.covariances_[n][:2])
+            case "spherical":
+                covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
+            case _:
+                covariances = gmm.covariances_[n][:2, :2]
+        # if gmm.covariance_type == 'full':
+        #     covariances = gmm.covariances_[n][:2, :2]
+        # elif gmm.covariance_type == "tied":
+        #         covariances = gmm.covariances_[:2, :2]
+        # elif gmm.covariance_type == "diag":
+        #         covariances = np.diag(gmm.covariances_[n][:2])
+        # elif gmm.covariance_type == "spherical":
+        #         covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
+        # else:
+        #         covariances = gmm.covariances_[n][:2, :2]
         v, w = np.linalg.eigh(covariances)
         u = w[0] / np.linalg.norm(w[0])
         angle = np.arctan2(u[1], u[0])
