@@ -469,7 +469,7 @@ def plot_multiRes_powerQ_refined( import_folder, assignment:pd.DataFrame, output
         if output != None :
             plt.savefig(f"{output}/all_result_{xy_cols[i][1]}_refined.png")
 
-def _plot_multiRes_powerQ_flex( xy_col, assignment, import_folder, file_name, xy_axis=None ):
+def _plot_multiRes_powerQ_flex( xy_col, assignment:pd.DataFrame, import_folder, file_name, xy_axis=None ):
 
     fig, ax = _plotFrame_multiRes_powerQ()
     if not (xy_axis is None):
@@ -489,15 +489,20 @@ def _plot_multiRes_powerQ_flex( xy_col, assignment, import_folder, file_name, xy
     # fig.suptitle(f'All Resonator (Free)')
 
     return fig, ax 
-def _add_plot_multiRes_powerQ( data:pd.DataFrame, asi, ax:plt.Axes):
+def _add_plot_multiRes_powerQ( data:pd.DataFrame, asi:pd.DataFrame, ax:plt.Axes):
 
 
     a_marker_style = asi["marker_style"].values[0]
     a_color = asi["color"].values[0]
-    lw = asi["center_linewidth"].values[0]
+    if "design_parameter" in asi.columns:
+        para = f"-{asi['design_parameter'].values[0]}"
+    else:
+        lw = asi["center_linewidth"].values[0]
+        para = f"-{lw}um"
+        
     label = asi['measurement_label'].values[0]
 
-    ax.errorbar(data["x"].values, data["y"].values, yerr=data["yerr"].values, ms = 5, fmt=a_marker_style, c=a_color, label=f"{label}-{lw}um")
+    ax.errorbar(data["x"].values, data["y"].values, yerr=data["yerr"].values, ms = 5, fmt=a_marker_style, c=a_color, label=f"{label}{para}")
 
 def _plotFrame_multiRes_powerQ( )->Tuple[plt.Figure,plt.Axes]:
 
