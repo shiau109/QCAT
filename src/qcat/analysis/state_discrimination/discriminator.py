@@ -1,90 +1,39 @@
 
 import numpy as np
 from sklearn.mixture import GaussianMixture
-
-class Discriminator():
-
-    def __init__( self ):
-        self.__model = GaussianMixture(n_components=2, random_state=0)
-
-    @property
-    def model( self )->GaussianMixture:
-        return self.__model
-
-    def import_training_data( self, data ):
-        """
-        input numpy array with shape (n,2)
-        n is point number
-        """
-        self.training_data = data
-        self.__model.fit(data)
-        self.__model.weights_ = [0.5,0.5]
-
-        # return self
-    def relabel_model( self, ground_data ):
-        """
-        input numpy array with shape (2,n)
-        """
-
-        gp = np.array([np.mean(ground_data, axis=1)])
-        # print( gp )
-        # print( gp.shape )
-
-        # print(self.__model.predict( gp ))
-        if self.__model.predict( gp ) == 1:
-            self.__model.means_ = np.flip(self.__model.means_,0)
-            self.__model.weights_ = np.flip(self.__model.weights_,0)
-            self.__model.covariances_ = np.flip(self.__model.covariances_,0)
-            self.__model.precisions_cholesky_ = np.flip(self.__model.precisions_cholesky_,0)
+from qcat.analysis.state_discrimination.cluster_training import GMMLabelMap
+from qcat.analysis.base import QCATAna
+import xarray as xr
 
 
-    def output_paras( self ):
-        """
-        four para in dict
-        means
-        weights
-        covariances
-        precisions_cholesk
-        """
-        output_dict = {
-            "means":self.__model.means_,
-            "weights":self.__model.weights_,
-            "covariances":self.__model.covariances_,
-            "precisions_cholesky":self.__model.precisions_cholesky_,
-        }
+class Discriminator( QCATAna ):
 
-        return output_dict
+    def __init__( self, cluster_model:GaussianMixture, label_map:GMMLabelMap ):
+        self.cluster_model = cluster_model
+        self.label_map = label_map
 
-    def rebuild_model( self, paras:dict ):
-
-        self.__model.means_ = paras["means"]
-        self.__model.weights_ = paras["weights"]
-        self.__model.covariances_ = paras["covariances"]
-        self.__model.precisions_cholesky_ = paras["precisions_cholesky"]
+    def _import_data( self, *args, **kwargs ):
+        """ Used to check input data """
+        pass
 
 
-    def get_prediction( self, data ):
-        """
-        input numpy array with shape (n,2)
-        n is point number
-        """
-        self.__predict_label = self.model.predict( data )
-        return self.__predict_label
+    def _start_analysis( self, *args, **kwargs ):
+        """ Used to start analysis which might be time costly """
+        
+        self.label_map = GMMLabelMap( self.label_assign )
+        self.label_map._import_data(label_darray)
+        self.label_map._start_analysis()
+        state_darray = self.label_map._export_result()
 
-    def get_state_population( self, data ):
-        self.get_prediction(data)
-        s_pop = np.bincount(self.__predict_label)
-        if s_pop.shape[-1] == 1:
-            s_pop =  np.append(s_pop, [0])
-        return s_pop
+        self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=state_darray, minlength=2)
+        self.state_probability = self.state_population/ state_darray.shape[-1]
+
+    def _export_result( self, *args, **kwargs ):
+        """ Export result with a format from analysis"""
+        pass
     
-    def output_1D_paras( self ):
-        sigma_0 = get_sigma(self.__model.covariances_[0])
-        sigma_1 = get_sigma(self.__model.covariances_[1])
-        sigmas_1d = np.array([sigma_0,sigma_1]) 
-        centers = self.__model.means_ 
-        # centers_1d = get_proj_distance(centers.transpose(), centers.transpose())    
-        return centers, sigmas_1d
+    
+
     
 def get_sigma( covariances ):
     v, w = np.linalg.eigh(covariances)
@@ -142,106 +91,180 @@ def train_GMModel( data ):
     my_model.relabel_model(np.array([data[0][0],data[1][0]]))
     return my_model
 
-from lmfit.models import GaussianModel
+from lmfit.models import GaussianModel, Model
 from lmfit.model import ModelResult
-class Discriminator1D():
 
-    def __init__( self ):
+class G1DDiscriminator():
+
+    def __init__( self, label_map:GMMLabelMap ):
+        self.label_map = label_map
         gm0 = GaussianModel(prefix="g0_", name="g0")
         gm1 = GaussianModel(prefix="g1_", name="g1")
-        self.__model = gm0 + gm1
+        self.__cluster_model = gm0 + gm1
+        self.threshold = None
 
     @property
-    def model( self )->GaussianMixture:
-        return self.__model
+    def cluster_model( self )->Model:
+        return self.__cluster_model 
+       
+    @cluster_model.setter
+    def cluster_model( self, val ):
 
-    def import_training_data( self, data, guess=None, guess_vary=False ):
-        """
-        input numpy array with shape (2,N)
-        shape[0]: state
-        shape[1]: N element is point number
-        """
-        
-        self.training_data = data
-        # print("guess",guess)
+        if isinstance( val, Model):
+            self.__cluster_model = val
 
-        if not isinstance(type(guess),type(None)):
-            mu, sigma = guess
-            # print("mu, sigma", mu, sigma)
+        # elif isinstance( val, dict ):
+        #     try:
+        #         self.__model = GaussianMixture(n_components=2, random_state=0)
+        #         self._rebuild_model(val)
+        #     except:
+        #         print("Can't rebuild model")
         else:
-            mu = np.mean(data, axis=1)
-            sigma = np.std( data, axis=1 )
+            print("Not correct type, please use GaussianModel object")
 
-        sigma_mean = np.mean( sigma )
+    def _import_data( self, data:xr.DataArray ):
+        """        
+        Used to check input data \n
+        Parameters:\n 
+        \t data: Dataset with var name "data", coords ["index"]. \n
+        Return:\n 
 
-        dis = np.abs(mu[1]-mu[0])
-        est_peak_h = 1/sigma_mean
-
-        # print("est_peak_h",est_peak_h)
+        """
         
-        bin_center = np.linspace(-(dis+2.5*sigma_mean), dis+2.5*sigma_mean,50)
-        width = bin_center[1] -bin_center[0]
-        bins = np.append(bin_center,bin_center[-1]+width) -width/2
+        for check_axis in ["index"]:
+            if check_axis in list(data.dims):
+                self.raw_data = data
+                return self.raw_data
+            else:
+                print(f"No {check_axis} axis in dataset")
+        
 
-        hist, bin_edges = np.histogram(data.flatten(), bins, density=True)
+    def _start_analysis( self ):
+        """ Used to start analysis which might be time costly """
 
-        self.__model.set_param_hint('g0_center',value=mu[0], vary=guess_vary)
-        self.__model.set_param_hint('g1_center',value=mu[1], vary=guess_vary)
-        self.__model.set_param_hint('g0_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
-        self.__model.set_param_hint('g1_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
-        self.__model.set_param_hint('g0_sigma',value=sigma[0], vary=guess_vary)
-        self.__model.set_param_hint('g1_sigma',value=sigma[1], vary=guess_vary)
+        # training_darray = self.raw_data.stack( new_index=('index', 'prepared_state'))
 
-        params = self.__model.make_params()
-        self._results = self.__model.fit(hist,params,x=bin_center)
+        params = self.cluster_model.param_hints
+        # print(params,params["g0_center"]["value"],params["g1_center"]["value"])
+        self.threshold = (params["g0_center"]["value"]+params["g1_center"]["value"])/2
+        self.signal = np.abs(params["g0_center"]["value"]-params["g1_center"]["value"])
+        self.noise = np.array([ params["g0_sigma"]["value"], params["g1_sigma"]["value"]])
+        self.snr = self.signal/np.mean(self.noise)
+        
+        # print(self.threshold)
 
-        return self._results
+        label_data = ( self.raw_data.values > self.threshold ).astype(int)
 
-    def fit_distribution( self, data, bin_center=None ):
-        """
-        input numpy array with shape (n,)
-        n is point number
-        """
+        # Create the DataArray with named dimensions
+        label_darray = xr.DataArray( label_data, coords=self.raw_data.coords )
+        # print(label_darray)
 
-        if type(bin_center) == type(None):
-            sigma = np.array([self._results.params["g0_sigma"],self._results.params["g1_sigma"]])
-            pos = np.array([self._results.params["g0_center"],self._results.params["g1_center"]])
-            bin_center = np.linspace(pos[0]-5.*sigma[0], pos[1]+5.*sigma[1],100)
+        self.label_map._import_data(label_darray)
+        self.label_map._start_analysis()
+        state_darray = self.label_map._export_result()
 
-        width = bin_center[1] -bin_center[0]
-        bins = np.append(bin_center,bin_center[-1]+width) -width/2
-        hist, _ = np.histogram(data, bins, density=True)
-        params = self.__model.make_params()
-        result = self.__model.fit(hist,params,x=bin_center)
-        return bin_center, hist, result
+        # self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=state_darray, minlength=2)
+        # self.state_probability = self.state_population/ state_darray.shape[-1]
+        self.result = state_darray
+        return state_darray
+
+    def _export_result( self ):
+        """ Export result with a format from analysis"""
+        return self.result
+
+
+
+from qcat.analysis.base import QCATAna
+from qcat.analysis.state_discrimination.cluster_training import GMMLabelMap
+
+class GMMDiscriminator(QCATAna):
+
+    def __init__( self, cluster_model:GaussianMixture, label_map:GMMLabelMap ):
+        super().__init__()
+        self.__cluster_model = cluster_model
+        self.label_map = label_map
     
-def get_probability( result ):
-    sigma = np.array([ result.params["g0_sigma"], result.params["g1_sigma"]])
-    peak_value = np.array([ result.params["g0_amplitude"], result.params["g1_amplitude"]])
-    area = peak_value * sigma*np.sqrt(2*np.pi)
-    probability = area/np.sum(area) 
-    return probability
+    @property
+    def cluster_model( self )->GaussianMixture:
+        return self.__cluster_model 
+       
+    @cluster_model.setter
+    def cluster_model( self, val ):
 
-def train_1DGaussianModel( training_data, guess=None )->Discriminator1D:
-    """
-    data type
-    3 dim with shape (2*N)
-    shape[0] is prepare state
-    shape[1] is N times single shot
+        if isinstance( val, GaussianMixture):
+            self.__cluster_model = val
+
+        # elif isinstance( val, dict ):
+        #     try:
+        #         self.__model = GaussianMixture(n_components=2, random_state=0)
+        #         self._rebuild_model(val)
+        #     except:
+        #         print("Can't rebuild model")
+        else:
+            print("Not correct type, please use GaussianMixture object")
+
+    def _import_data( self, data:xr.DataArray ):
+        """        
+        Used to check input data \n
+        Parameters:\n 
+        \t data: Dataset with var name "data", coords ["mixer", "index"]. \n
+        Return:\n 
+
+        """
+        if "mixer" in list(data.dims):
+            self.raw_data = data
+            return self.raw_data
+        else:
+            print("No mixer axis in dataset")
+        
+
+    def _start_analysis( self ):
+        """ Used to start analysis which might be time costly """
+
+        training_darray = self.raw_data.stack( new_index=('index', 'prepared_state'))
+        training_darray = training_darray.transpose( "new_index", "mixer" )
+
+        self.__predict_label = self.cluster_model.predict( training_darray.values )
+
+        # Create the DataArray with named dimensions
+        label_darray = xr.DataArray( self.__predict_label, dims=["new_index"] )
+        # print(label_darray)
+        label_darray = label_darray.assign_coords( new_index=training_darray.coords["new_index"])
+        label_darray = label_darray.unstack("new_index")
+        label_darray = label_darray.transpose( "prepared_state", "index" )
+        # print(label_darray)
+
+        self.label_map._import_data(label_darray)
+        self.label_map._start_analysis()
+        state_darray = self.label_map._export_result()
+        # self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=state_darray, minlength=2)
+        # self.state_probability = self.state_population/ state_darray.shape[-1]
+        self.result = state_darray
+        return state_darray
+
+    def _export_result( self ):
+        """ Export result with a format from analysis"""
+        return self.result
+
+    def _export_1D_paras( self ):
+        sigma_0 = get_sigma(self.__cluster_model.covariances_[0])
+        sigma_1 = get_sigma(self.__cluster_model.covariances_[1])
+        sigmas_1d = np.array([sigma_0,sigma_1]) 
+        centers_2d = self.__cluster_model.means_ 
+        centers_1d = get_proj_distance(centers_2d.transpose(), centers_2d.transpose())    
+        return centers_2d, centers_1d, sigmas_1d
+
+    def _export_G1DDiscriminator( self )->G1DDiscriminator:
+        g1d_discriminator = G1DDiscriminator( self.label_map )
+        centers_2d, centers_1d, sigmas_1d = self._export_1D_paras()
+        g1d_discriminator.cluster_model.set_param_hint('g0_center',value=centers_1d[0], vary=False)
+        g1d_discriminator.cluster_model.set_param_hint('g1_center',value=centers_1d[1], vary=False)
+        g1d_discriminator.cluster_model.set_param_hint('g0_sigma',value=sigmas_1d[0], vary=False)
+        g1d_discriminator.cluster_model.set_param_hint('g1_sigma',value=sigmas_1d[1], vary=False)
+        return g1d_discriminator
+            
+
+
     
-    """
-    my_model = Discriminator1D()
-    # combined_training_data = training_data.reshape((2*training_data.shape[-1]))
-    my_model.import_training_data( training_data, guess=guess, guess_vary=False)
-    return my_model
 
-def p01_to_Teff( p01, frequency ):
-    """
-    Parameters:\n
-    frequency unit in Hz
-    """
-    n = p01/(1-2*p01)
-    HDB = (1.0546/1.3806) *1e-11 # 1.0546e-34 / 1.3806e-23
-    effective_T = frequency*2*np.pi*HDB/np.log(1+1/n)
 
-    return effective_T

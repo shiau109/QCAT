@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
-from qcat.analysis.state_discrimination.discriminator import get_proj_distance, train_GMModel, train_1DGaussianModel, p01_to_Teff, get_probability, get_sigma
-def plot_readout_fidelity( data, frequency=None, output=None, plot=True, detail_output:bool=False):
+from qcat.analysis.state_discrimination.readout_fidelity import GMMROFidelity, G1DROFidelity
+from qcat.analysis.state_discrimination import p01_to_Teff
+def plot_readout_fidelity( dataset:xr.DataArray, gmm_ROfidelity:GMMROFidelity, g1d_ROfidelity:G1DROFidelity, frequency=None, output=None, plot=True, detail_output:bool=False):
 
 
     """
@@ -17,12 +18,8 @@ def plot_readout_fidelity( data, frequency=None, output=None, plot=True, detail_
         shape[2] is N times single shot\n
     
     """
-    trained_GMModel = train_GMModel(data)
-    dataset = xr.Dataset(
-        {"single_shot":(["mixer","state","shot_idx"],data)},
-        coords={ "mixer":np.array(["I","Q"]), "state": np.array([0,1]), "shot_idx":np.arange(data.shape[2]) }
-    )
-    
+    # dataset = xr.DataArray(data, coords= [("mixer",["I","Q"]), ("prepared_state",[0,1]), ("shot_idx",data.shape[2])] )
+
     plt.rcParams['figure.figsize'] = [16.0, 8.0]
     plt.rcParams['figure.autolayout'] = True
     fig = plt.figure(constrained_layout=True)
@@ -43,70 +40,50 @@ def plot_readout_fidelity( data, frequency=None, output=None, plot=True, detail_
     ax_iq_1 = plt.subplot(gs[0,2])
     ax_iq_1.set_title("Prepare |1>", fontsize=20  )
     ax_iq_1.tick_params(axis='both', labelsize=15)
-
     ax_hist_1 = plt.subplot(gs[1,2])
     ax_hist_1.tick_params(axis='both', labelsize=15)
 
-    # scatter plot
-    training_data = trained_GMModel.training_data.transpose()
-    _plot_iq_shots( training_data[0], training_data[1], trained_GMModel.get_prediction(trained_GMModel.training_data), ax_iq_training )
-    make_ellipses( trained_GMModel.model, ax_iq_training )
+    # Training scatter plot
+    training_data = dataset.stack( new_index=('prepared_state','index')).values
+    state = np.concatenate((gmm_ROfidelity.state_data_array[0], gmm_ROfidelity.state_data_array[1]))
 
-    # scatter prepare 0 plot
-    p0_data = dataset["single_shot"].sel(state=0).values
-    _plot_iq_shots(p0_data[0],p0_data[1],trained_GMModel.get_prediction(p0_data.transpose()),ax_iq_0)
-    prepare_0_dist = trained_GMModel.get_state_population(p0_data.transpose())
-    prepare_0_dist = prepare_0_dist/np.sum(prepare_0_dist)
+    _plot_iq_shots( training_data[0], training_data[1], state, ax_iq_training )
+    make_ellipses( gmm_ROfidelity.discriminator.cluster_model, ax_iq_training )
 
-    ax_iq_0.text(0.07,0.9,f"P(0|0)={prepare_0_dist[0]:.3f}", fontsize = 20, transform=ax_iq_0.transAxes)
-    ax_iq_0.text(0.07,0.8,f"P(0|1)={prepare_0_dist[1]:.3f}", fontsize = 20, transform=ax_iq_0.transAxes)
+   
+    ax_p_iq = [ax_iq_0, ax_iq_1] 
+    ax_hist = [ax_hist_0, ax_hist_1] 
 
-    # scatter prepare 1 plot
-    p1_data = dataset["single_shot"].sel(state=1).values
-    _plot_iq_shots(p1_data[0],p1_data[1],trained_GMModel.get_prediction(p1_data.transpose()),ax_iq_1)
-    prepare_1_dist = trained_GMModel.get_state_population(p1_data.transpose())
-    prepare_1_dist = prepare_1_dist/np.sum(prepare_1_dist)
-    ax_iq_1.text(0.07,0.9,f"P(1|0)={prepare_1_dist[0]:.3f}", fontsize = 20, transform=ax_iq_1.transAxes)
-    ax_iq_1.text(0.07,0.8,f"P(1|1)={prepare_1_dist[1]:.3f}", fontsize = 20, transform=ax_iq_1.transAxes)
-
-    # Histogram plot
-
-    centers, sigmas = trained_GMModel.output_1D_paras()
-
-    train_data_proj = get_proj_distance(centers.transpose(), data) 
-    pos = get_proj_distance(centers.transpose(), centers.transpose()) 
-    dis = np.abs(pos[1]-pos[0])
-    sigma = np.max( sigmas )
-
-    
-    # # Histogram plot
-    trained_1DGModel = train_1DGaussianModel( train_data_proj, (pos, sigmas)  )
-    trained_1DGModel._results.fit_report()
-
-    bin_center, hist_0, p0_result = trained_1DGModel.fit_distribution(train_data_proj[0])
-    bin_center, hist_1, p1_result = trained_1DGModel.fit_distribution(train_data_proj[1])
+    state_probability = gmm_ROfidelity.state_probability
+    # prepare i state plot
+    for i in [0,1]:
+        # scatter plot
+        p_data = dataset.sel(prepared_state=i).values
+        _plot_iq_shots(p_data[0],p_data[1],gmm_ROfidelity.state_data_array[i],ax_p_iq[i],i,gmm_ROfidelity.state_probability[i])
+        
+        # Histogram plot
+        g1d_prob, bin_center, hist, p_result = g1d_ROfidelity.g1d_dist[i]
+        _plot_1Ddistribution( bin_center, hist, p_result, i, g1d_ROfidelity._get_gaussian_area(p_result), ax_hist[i])
  
-    # print(p0_result.fit_report(),p1_result.fit_report())
-    plot_1Ddistribution( bin_center, hist_0, p0_result, 0, ax_hist_0)
-    plot_1Ddistribution( bin_center, hist_1, p1_result, 1, ax_hist_1)
-
+        
+    dis = g1d_ROfidelity.discriminator.signal
+    sigma = np.mean(g1d_ROfidelity.discriminator.noise)
+    # print(sigma)
+    snr = g1d_ROfidelity.discriminator.snr
     # Text infor
-    snr = dis/sigma
-    fig.text(0.05,0.35,f"Readout Fidelity={1-(prepare_0_dist[1]+prepare_1_dist[0])/2:.3f}", fontsize = 20)
+    fig.text(0.05,0.35,f"Readout Fidelity={1-(state_probability[0][0]+state_probability[1][1])/2:.3f}", fontsize = 20)
     fig.text(0.05,0.3,f"IQ distance/STD={dis:.2f}/{sigma:.2f}", fontsize = 20)
     fig.text(0.05,0.25,f"Voltage SNR={snr:.2f}", fontsize = 20)
     fig.text(0.05,0.20,f"Power SNR={np.log10(snr)*20:.2f} dB", fontsize = 20)
     
     if frequency != None:
 
-        probability = get_probability(p0_result)
-        p01 = probability[1]
+        p01 = g1d_ROfidelity.g1d_dist[0][0][1]
         
         effective_T = p01_to_Teff(p01, frequency)
         fig.text(0.05,0.15,f"Effective temperature (mK)={effective_T*1000:.1f}", fontsize = 20)
     else:
-        probability = get_probability(p0_result)
-        p01 = probability[1]
+        p01 = state_probability[0][1]
         effective_T = 0
     if output != None :
         full_path = f"{output}.png"
@@ -129,7 +106,7 @@ def plot_readout_fidelity( data, frequency=None, output=None, plot=True, detail_
 import matplotlib as mpl
 colors = ["blue", "red"]
 
-def make_ellipses(gmm, ax):
+def make_ellipses(gmm, ax:plt.Axes):
     for n, color in enumerate(colors):
         match gmm.covariance_type:
             case "full":
@@ -146,7 +123,9 @@ def make_ellipses(gmm, ax):
         u = w[0] / np.linalg.norm(w[0])
         angle = np.arctan2(u[1], u[0])
         angle = 180 * angle / np.pi  # convert to degrees
-        v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+        # v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+        v = 3.0* np.sqrt(v)
+        # print(f"ellipses{v/3}")
         ell = mpl.patches.Ellipse(
             gmm.means_[n, :2], v[0], v[1], angle=180 + angle, color=color, fill=False
         )
@@ -157,7 +136,7 @@ def make_ellipses(gmm, ax):
 
 
 
-def _plot_iq_shots( idata, qdata, label, ax ):
+def _plot_iq_shots( idata, qdata, label, ax:plt.Axes, prepare_state:int=None, probability=None ):
     """
     Parameters:
     idata is 1d array
@@ -170,10 +149,13 @@ def _plot_iq_shots( idata, qdata, label, ax ):
     ax.set_aspect("equal", "datalim")
     ax.set_xlabel('I Voltage Signal', fontsize=20)
     ax.set_ylabel('Q Voltage Signal', fontsize=20)
-
+    if prepare_state is not None:
+        ax.text(0.07,0.9,f"P({prepare_state}|0)={probability[0]:.3f}", fontsize = 20, transform=ax.transAxes)
+        ax.text(0.07,0.8,f"P({prepare_state}|1)={probability[1]:.3f}", fontsize = 20, transform=ax.transAxes)
+    
 from lmfit.models import GaussianModel
 from lmfit.model import ModelResult
-def plot_1Ddistribution( bin_center, hist, results, prepare_state:int, ax):
+def _plot_1Ddistribution( bin_center, hist, results, prepare_state:int, probability, ax:plt.Axes):
 
     sigma = np.array([results.params["g0_sigma"],results.params["g1_sigma"]])
     _plot_histogram(bin_center, hist, ax)
@@ -183,15 +165,12 @@ def plot_1Ddistribution( bin_center, hist, results, prepare_state:int, ax):
     _plot_gaussian_fit_curve( bin_center, results, ax)
     ax.set_yscale('log')
     ax.set_ylim(1e-3,np.max(hist)*1.5)
-    peak_value = np.array([results.params["g0_amplitude"].value, results.params["g1_amplitude"].value])
-    area = peak_value * sigma*np.sqrt(2*np.pi)
-    probability = area/np.sum(area)
     ax.text(0.07,0.9,f"P({prepare_state}|0)={probability[0]:.3f}", fontsize = 20, transform=ax.transAxes)
     ax.text(0.07,0.8,f"P({prepare_state}|1)={probability[1]:.3f}", fontsize = 20, transform=ax.transAxes)
     
     ax.set_xlabel('Projected Voltage Signal', fontsize=18)
 
-def _plot_histogram(bin_center, data, ax):
+def _plot_histogram(bin_center, data, ax:plt.Axes):
     """
     data type
     1 dim with shape (N)
@@ -204,7 +183,7 @@ def _plot_histogram(bin_center, data, ax):
 
 
 
-def _plot_gaussian_fit_curve(xdata, result:ModelResult, ax):
+def _plot_gaussian_fit_curve(xdata, result:ModelResult, ax:plt.Axes):
     # ax.plot(xdata, result.init_fit, '-', label='init fit') 
     ax.plot(xdata, result.best_fit, '--', color="black", label='best fit', linewidth=2)
 
