@@ -237,8 +237,8 @@ class GMMDiscriminator(QCATAna):
         self.label_map._import_data(label_darray)
         self.label_map._start_analysis()
         state_darray = self.label_map._export_result()
-        # self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=state_darray, minlength=2)
-        # self.state_probability = self.state_population/ state_darray.shape[-1]
+        self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=state_darray, minlength=2)
+        self.state_probability = self.state_population/ state_darray.shape[-1]
         self.result = state_darray
         return state_darray
 
