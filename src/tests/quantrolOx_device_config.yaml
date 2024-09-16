@@ -1,0 +1,89 @@
+device_name: AS_5Q4C_0430_8
+description: a linear array of 5 qubits with 4 couplers
+components:
+  - name: FeedLineA
+    idx: a3820acd-a4a4-45d7-beba-70a6798920d2
+    component_type: STATE_DETECTOR
+    qubit_names:
+      - QB0
+      - QB1
+      - QB2
+      - QB3
+      - QB4
+    qubit_idxs:
+      - 143db468-90c0-4a98-becf-6bdb6ad6f4f6
+      - 318032a4-7617-4bff-9831-32917fddfe0d
+      - 1f3d1748-c544-4ca1-8560-735502187f99
+      - 9d957ff2-61f0-4143-8f8f-a87f920483d2
+      - f244ad01-e0b9-4966-a56c-a93451ad592e
+  - name: CPL1
+    idx: d15286dd-d553-4eb5-a50a-734be13b497a
+    component_type: QUBIT_COUPLER
+  - name: CPL2
+    idx: a00af3a4-001f-40fa-a180-bdb3d13e87a8
+    component_type: QUBIT_COUPLER
+  - name: CPL3
+    idx: 2b5ff25a-575e-4807-846c-5b709f8d1579
+    component_type: QUBIT_COUPLER
+  - name: CPL4
+    idx: 14eecb59-91d1-4671-8a10-3c0396b99a49
+    component_type: QUBIT_COUPLER
+  - name: QB0
+    idx: 143db468-90c0-4a98-becf-6bdb6ad6f4f6
+    component_type: QUBIT
+    disabled: false
+    visualization_x: 0
+    visualization_y: 0
+  - name: QB1
+    idx: 318032a4-7617-4bff-9831-32917fddfe0d
+    component_type: QUBIT
+    disabled: false
+    visualization_x: 1
+    visualization_y: 0
+  - name: QB2
+    idx: 1f3d1748-c544-4ca1-8560-735502187f99
+    component_type: QUBIT
+    disabled: false
+    visualization_x: 2
+    visualization_y: 0
+  - name: QB3
+    idx: 9d957ff2-61f0-4143-8f8f-a87f920483d2
+    component_type: QUBIT
+    disabled: false
+    visualization_x: 3
+    visualization_y: 0
+  - name: QB4
+    idx: f244ad01-e0b9-4966-a56c-a93451ad592e
+    component_type: QUBIT
+    disabled: false
+    visualization_x: 4
+    visualization_y: 0
+  - name: C01
+    idx: 8f2f9737-3d8f-49e5-a505-49fcb427b13f
+    component_type: QUBIT_PAIR
+    qubit_1_name: QB0
+    qubit_2_name: QB1
+    coupler_name: CPL1
+    control_qubit_first: true
+  - name: C12
+    idx: 8fd7f659-4671-4e9d-87b6-155881e99372
+    component_type: QUBIT_PAIR
+    qubit_1_name: QB1
+    qubit_2_name: QB2
+    coupler_name: CPL2
+    control_qubit_first: true
+  - name: C23
+    idx: ab1e05c9-1894-4498-a0a7-2f214d86fb85
+    component_type: QUBIT_PAIR
+    qubit_1_name: QB2
+    qubit_2_name: QB3
+    coupler_name: CPL3
+    control_qubit_first: true
+  - name: C34
+    idx: d9d51588-87de-4f28-9462-ef31d920858e
+    component_type: QUBIT_PAIR
+    qubit_1_name: QB3
+    qubit_2_name: QB4
+    coupler_name: CPL4
+    control_qubit_first: true
+idx: 1

@@ -2,7 +2,7 @@
 import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
-from qcat.coupling.iswap import fft_chavron, get_main_tone
+from qcat.analysis.coupling.iswap import fft_chavron, get_main_tone
 
 def plot_rabi_chavron_analysis_result( data, tuning ,time, output=None  ):
     """

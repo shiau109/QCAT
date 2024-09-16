@@ -1,0 +1,61 @@
+[sample_info]
+  name = "3XQ"
+  holder = "AS1603"
+
+
+[measurement_info]
+  cooldown_date = "20220821"
+  DR = "DR1"
+
+
+[[coupling]]
+    name = ["r0","q0"]
+    coupling_strength = 10
+  [coupling.parameters]
+    chi_01 = 5
+    chi_eff = 1.2
+
+[[coupling]]
+    name = ["TL","r0"]
+    coupling_strength = 1
+
+
+[[component]]
+  name = "Q0"
+  component_type = "tunable_transmon_qubit"
+  [component.parameters]
+    transition_frequency = 4.5
+    anharmonicity = 200
+    flux_period = 0.8
+    flux_offset = 0.1
+    flux_bias = 0
+    thermal_population = 0.05
+    T1 = 10
+    T2_Ramsey = 5
+    T2_echo = 10
+    [component.parameters.optional]
+
+
+[[component]]
+  name = "r0"
+  component_type = "notch_resonator"
+  [component.parameters]
+    resonant_frequency_bare = 4.50
+    bare_power = -20
+    intrinsic_decay_rate_bare = 1e6
+
+    resonant_frequency_dress = 4.49
+    dress_power = -30
+    intrinsic_decay_rate_dress = 1e6
+
+[[operation]]
+  name = "sq0"
+  [operation.parameters]
+    [operation.parameters.readout]
+      frequency = 6.1
+      integration_length = 500
+      fidelity = 0.90
+    [operation.parameters.control]
+      frequency = 4.5
+      gate_time = 40
+      native_gate_fidelity = 0.99
