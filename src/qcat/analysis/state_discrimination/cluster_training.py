@@ -32,7 +32,10 @@ class GMMClusterTrainer( QCATAna ):
             print("training data should be 2D array with shape (n,2)")
 
     def _start_analysis( self ):
-        self.__model.fit( self.raw_data )
+        try:
+            self.__model.fit( self.raw_data )
+        except:
+            print(f"GaussianMixture fit fail")
         self.__model.weights_ = [0.5,0.5]
 
         self.result = self.__model

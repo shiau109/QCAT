@@ -167,8 +167,12 @@ class G1DROFidelity( QCATAna ):
 
         width = bin_center[1] -bin_center[0]
         bins = np.append(bin_center,bin_center[-1]+width) -width/2
+        print("hist", bins)
         hist, _ = np.histogram(data, bins, density=True)
         params = self.discriminator.cluster_model.make_params()
+        print("hist", hist)
+        print("bin_center", bin_center)
+
         result = self.discriminator.cluster_model.fit(hist,params,x=bin_center)
         probability = self._get_gaussian_area(result)
         

@@ -89,15 +89,18 @@ def get_fixed_paras( fitParas:pd.DataFrame ):
     # print(fitParas["alpha"].to_numpy())
     # print(np.unwrap( fitParas["alpha"].to_numpy(), period=np.pi))
 
-    delay_refined = np.average(fitParas["delay"].to_numpy(), weights=weights)
-    amp_refined = np.average(fitParas["A"].to_numpy(), weights=weights)
-    Qc_refined = np.average(fitParas["Qc_dia_corr"].to_numpy(), weights=weights)
-    alpha_refined = np.average(fitParas["alpha"].to_numpy(), weights=weights)
+    # delay_refined = np.average(fitParas["delay"].to_numpy(), weights=weights)
+    # amp_refined = np.average(fitParas["A"].to_numpy(), weights=weights)
+    # Qc_refined = np.average(fitParas["Qc_dia_corr"].to_numpy(), weights=weights)
+    # alpha_refined = np.average(fitParas["alpha"].to_numpy(), weights=weights)
+
     # fixed_alpha = np.average(np.unwrap( fitParas["alpha"].to_numpy(), period=np.pi), weights=weights)
-    
-    # fixed_delay = fitParas["delay"].to_numpy()[min_chi_idx]  
-    # fixed_amp = fitParas["A"].to_numpy()[min_chi_idx]  
-    # fixed_alpha = fitParas["alpha"].to_numpy()[min_chi_idx] 
+
+    delay_refined = fitParas["delay"].to_numpy()[min_chi_idx]  
+    amp_refined = fitParas["A"].to_numpy()[min_chi_idx]  
+    Qc_refined = fitParas["Qc_dia_corr"].to_numpy()[min_chi_idx]  
+    alpha_refined = fitParas["alpha"].to_numpy()[min_chi_idx]  
+
     return delay_refined, amp_refined, Qc_refined, alpha_refined
 
 def find_row( file_name, colname, value ):
