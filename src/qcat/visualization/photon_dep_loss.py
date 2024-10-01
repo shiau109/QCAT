@@ -495,7 +495,7 @@ def _add_plot_multiRes_powerQ( data:pd.DataFrame, asi:pd.DataFrame, ax:plt.Axes)
     a_marker_style = asi["marker_style"].values[0]
     a_color = asi["color"].values[0]
     if "design_parameter" in asi.columns:
-        para = f"-{asi['design_parameter'].values[0]}"
+        para = f" {asi['design_parameter'].values[0]}"
     else:
         lw = asi["center_linewidth"].values[0]
         para = f"-{lw}um"
