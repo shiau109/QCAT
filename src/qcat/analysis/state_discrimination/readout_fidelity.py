@@ -70,7 +70,7 @@ class GMMROFidelity( QCATAna ):
         return label_assign
     
     def export_G1DROFidelity( self ):
-        data = self.raw_data.transpose("prepared_state", "mixer", "index").values
+        data = self.raw_data.transpose("mixer","prepared_state",  "index").values
         centers_2d, centers1d, sigmas = self.discriminator._export_1D_paras()
         train_data_proj = get_proj_distance(centers_2d.transpose(), data)
         dataset_proj = xr.DataArray(train_data_proj, coords= [ ("prepared_state",[0,1]), ("index",np.arange(data.shape[2]))] )
@@ -167,11 +167,10 @@ class G1DROFidelity( QCATAna ):
 
         width = bin_center[1] -bin_center[0]
         bins = np.append(bin_center,bin_center[-1]+width) -width/2
-        print("hist", bins)
+        # print("bins", bins[0], bins[-1])
         hist, _ = np.histogram(data, bins, density=True)
         params = self.discriminator.cluster_model.make_params()
-        print("hist", hist)
-        print("bin_center", bin_center)
+        # print("hist", hist)
 
         result = self.discriminator.cluster_model.fit(hist,params,x=bin_center)
         probability = self._get_gaussian_area(result)
