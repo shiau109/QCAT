@@ -94,17 +94,15 @@ class GMMLabelAssign():
         self.raw_data = data
 
     def _start_analysis( self ):
-        state_map = self.raw_data.coords["prepared_state"].values
+        prepare_state = self.raw_data.coords["prepared_state"].values
         state_iq_point = self.raw_data.values
-        label_map = self.cluster_model.predict(state_iq_point)
-
-        self.state_map = state_map
-        self.label_map = label_map
-        self.result = {
-            "state":state_map,
-            "label":label_map
-        }
+        predict_state = self.cluster_model.predict(state_iq_point)
+        mapping_arr = predict_state[prepare_state]
+        # self.state_map = state_map
+        self.mapping_arr = mapping_arr
+        self.result = mapping_arr
         return self.result
+    
     def _export_result( self ):
 
         return self.result
@@ -130,11 +128,11 @@ class GMMLabelMap():
 
     def _start_analysis( self ):
 
-        state_map = np.array(self.label_assign.state_map)
+        mapping_arr = np.array(self.label_assign.mapping_arr)
         label_data = self.raw_data.values
 
         # flat_array = label_data.flatten()
-        state_data = state_map[label_data]#.reshape(label_data.shape)
+        state_data = mapping_arr[label_data]#.reshape(label_data.shape)
         self.result = state_data
         return self.result
 

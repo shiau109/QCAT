@@ -33,7 +33,6 @@ class GMMROFidelity( QCATAna ):
         
         training_DataArray = self.raw_data.stack( new_index=('index', 'prepared_state'))
         training_DataArray = training_DataArray.transpose( "new_index", "mixer" )
-        # print(training_DataArray)
         training_data = training_DataArray.values
  
         self.cluster_trainer = GMMClusterTrainer()
@@ -41,7 +40,6 @@ class GMMROFidelity( QCATAna ):
         self.cluster_trainer._start_analysis()
 
         trained_model = self.cluster_trainer._export_result()
-
         label_assign = self._create_state_label_mapping( trained_model )
         self.label_map = GMMLabelMap( label_assign )
 
@@ -63,7 +61,6 @@ class GMMROFidelity( QCATAna ):
     def _create_state_label_mapping( self, trained_model )->GMMLabelAssign:
 
         ave_iq = self.raw_data.mean(dim="index")
-
         label_assign = GMMLabelAssign( trained_model )
         label_assign._import_data(ave_iq)
         label_assign._start_analysis()
