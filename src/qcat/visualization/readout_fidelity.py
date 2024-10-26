@@ -48,7 +48,12 @@ def plot_readout_fidelity( dataset:xr.DataArray, gmm_ROfidelity:GMMROFidelity, g
     state = np.concatenate((gmm_ROfidelity.state_data_array[0], gmm_ROfidelity.state_data_array[1]))
 
     _plot_iq_shots( training_data[0], training_data[1], state, ax_iq_training )
-    make_ellipses( gmm_ROfidelity.discriminator.cluster_model, ax_iq_training )
+    mapping_arr = gmm_ROfidelity.label_map.label_assign.mapping_arr
+    colors = ["blue", "red"]
+    for label_i in [0,1]:
+        state_i = mapping_arr[label_i]
+        color = colors[state_i]
+        make_ellipse( gmm_ROfidelity.discriminator.cluster_model, label_i, color, ax_iq_training )
 
    
     ax_p_iq = [ax_iq_0, ax_iq_1] 
@@ -106,33 +111,32 @@ def plot_readout_fidelity( dataset:xr.DataArray, gmm_ROfidelity:GMMROFidelity, g
 import matplotlib as mpl
 colors = ["blue", "red"]
 
-def make_ellipses(gmm, ax:plt.Axes):
-    for n, color in enumerate(colors):
-        match gmm.covariance_type:
-            case "full":
-                covariances = gmm.covariances_[n][:2, :2]
-            case "tied":
-                covariances = gmm.covariances_[:2, :2]
-            case "diag":
-                covariances = np.diag(gmm.covariances_[n][:2])
-            case "spherical":
-                covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
-            case _:
-                covariances = gmm.covariances_[n][:2, :2]
-        v, w = np.linalg.eigh(covariances)
-        u = w[0] / np.linalg.norm(w[0])
-        angle = np.arctan2(u[1], u[0])
-        angle = 180 * angle / np.pi  # convert to degrees
-        # v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
-        v = 3.0* np.sqrt(v)
-        # print(f"ellipses{v/3}")
-        ell = mpl.patches.Ellipse(
-            gmm.means_[n, :2], v[0], v[1], angle=180 + angle, color=color, fill=False
-        )
-        ell.set_clip_box(ax.bbox)
-        ell.set_alpha(0.5)
-        ax.add_artist(ell)
-        ax.set_aspect("equal", "datalim")
+def make_ellipse(gmm, label_i, color, ax:plt.Axes):
+    match gmm.covariance_type:
+        case "full":
+            covariances = gmm.covariances_[label_i][:2, :2]
+        case "tied":
+            covariances = gmm.covariances_[:2, :2]
+        case "diag":
+            covariances = np.diag(gmm.covariances_[label_i][:2])
+        case "spherical":
+            covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[label_i]
+        case _:
+            covariances = gmm.covariances_[label_i][:2, :2]
+    v, w = np.linalg.eigh(covariances)
+    u = w[0] / np.linalg.norm(w[0])
+    angle = np.arctan2(u[1], u[0])
+    angle = 180 * angle / np.pi  # convert to degrees
+    # v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+    v = 3.0* np.sqrt(v)
+    # print(f"ellipses{v/3}")
+    ell = mpl.patches.Ellipse(
+        gmm.means_[label_i, :2], v[0], v[1], angle=180 + angle, color=color, fill=False
+    )
+    ell.set_clip_box(ax.bbox)
+    ell.set_alpha(0.5)
+    ax.add_artist(ell)
+    ax.set_aspect("equal", "datalim")
 
 
 
