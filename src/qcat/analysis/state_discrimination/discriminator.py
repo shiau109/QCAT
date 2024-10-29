@@ -247,10 +247,18 @@ class GMMDiscriminator(QCATAna):
         return self.result
 
     def _export_1D_paras( self ):
-        sigma_0 = get_sigma(self.__cluster_model.covariances_[0])
-        sigma_1 = get_sigma(self.__cluster_model.covariances_[1])
-        sigmas_1d = np.array([sigma_0,sigma_1]) 
-        centers_2d = self.__cluster_model.means_ 
+
+
+        mapping_arr = self.label_map.label_assign.mapping_arr
+        sigma = [None]*2
+        centers_2d = [None]*2
+        for label_i in [0,1]:
+            state_i = mapping_arr[label_i]
+            sigma[state_i] = get_sigma(self.__cluster_model.covariances_[label_i])
+            centers_2d[state_i] = self.__cluster_model.means_[label_i]
+
+        sigmas_1d = np.array(sigma)
+        centers_2d = np.array(centers_2d)
         centers_1d = get_proj_distance(centers_2d.transpose(), centers_2d.transpose())    
         return centers_2d, centers_1d, sigmas_1d
 
