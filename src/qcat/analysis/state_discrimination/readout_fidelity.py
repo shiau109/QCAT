@@ -14,6 +14,10 @@ class GMMROFidelity( QCATAna ):
         self.discriminator = None
     
 
+    @property
+    def centers ( self )->np.ndarray:
+        return self.discriminator.cluster_model.means_
+    
     def _import_data( self, data:xr.DataArray ):
         """        
         Used to check input data \n
@@ -48,7 +52,7 @@ class GMMROFidelity( QCATAna ):
         self.discriminator = GMMDiscriminator( trained_model, self.label_map )
         self.discriminator._import_data( self.raw_data )
         self.discriminator._start_analysis()
-
+    
         self.state_data_array = self.discriminator._export_result()
 
         self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=self.state_data_array, minlength=2)

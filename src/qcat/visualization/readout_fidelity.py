@@ -76,7 +76,7 @@ def plot_readout_fidelity( dataset:xr.DataArray, gmm_ROfidelity:GMMROFidelity, g
     # print(sigma)
     snr = g1d_ROfidelity.discriminator.snr
     # Text infor
-    fig.text(0.05,0.35,f"Readout Fidelity={1-(state_probability[0][0]+state_probability[1][1])/2:.3f}", fontsize = 20)
+    fig.text(0.05,0.35,f"Readout Fidelity={(state_probability[0][0]+state_probability[1][1])/2:.3f}", fontsize = 20)
     fig.text(0.05,0.3,f"IQ distance/STD={dis:.2f}/{sigma:.2f}", fontsize = 20)
     fig.text(0.05,0.25,f"Voltage SNR={snr:.2f}", fontsize = 20)
     fig.text(0.05,0.20,f"Power SNR={np.log10(snr)*20:.2f} dB", fontsize = 20)

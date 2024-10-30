@@ -132,7 +132,7 @@ class GMMLabelMap():
         label_data = self.raw_data.values
         print(label_data)
 
-        print(self.label_assign.state_map,self.label_assign.label_map)
+        # print(self.label_assign.state_map,self.label_assign.label_map)
         # flat_array = label_data.flatten()
         state_data = mapping_arr[label_data]#.reshape(label_data.shape)
         self.result = state_data
