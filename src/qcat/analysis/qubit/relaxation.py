@@ -31,7 +31,7 @@ def qubit_relaxation_fitting( time, data )->ModelResult:
     params['amp'].set(data[0]-data[-1])#, vary=False)
     params['offset'].set(data[-1])#averaging(data,6))
     params['tau'].set(guess_tau(time,data), min=0, max=time[-1]) 
-    print(params['amp'],params['offset'],params['tau'])
+    
     result = model.fit(data, params, t=time)
     return result
 
