@@ -18,9 +18,9 @@ def _qubit_relaxation_model():
     params = model.make_params(amp=0.02, tau=500, offset=0)
 
     # params['amp'].set(min=0.0, max=1.0) 
-    params['tau'].set(min=0, max=1e6) 
+    # params['tau'].set(min=0, max=1e6) 
 
-    params['offset'].set(min=-1.0, max=1.0)
+    # params['offset'].set(min=-1.0, max=1.0)
     return model, params
 
 def qubit_relaxation_fitting( time, data )->ModelResult:
@@ -29,9 +29,9 @@ def qubit_relaxation_fitting( time, data )->ModelResult:
     # max_val = np.max(data)
     # min_val = np.min(data)
     params['amp'].set(data[0]-data[-1])#, vary=False)
-    params['offset'].set(averaging(data,6))
+    params['offset'].set(data[-1])#averaging(data,6))
     params['tau'].set(guess_tau(time,data), min=0, max=time[-1]) 
-
+    
     result = model.fit(data, params, t=time)
     return result
 
