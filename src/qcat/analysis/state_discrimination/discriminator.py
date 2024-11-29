@@ -216,27 +216,58 @@ class GMMDiscriminator(QCATAna):
             return self.raw_data
         else:
             print("No mixer axis in dataset")
+    
+    def _zip_data(self, raw_data:xr.DataArray|xr.Dataset=None)->tuple:
+        """ Must be used after self._import_data(), zip data coords.\n 
+            Ex. coords (mixer, coord_a, coord_b, ..., index) -> (mixer, compressed, index)\n
+            ### Return\n
+            \t self.un_zip_size, for reshaping
+        """
+        if raw_data is not None:
+            if "mixer" in list(raw_data.dims):
+                self.raw_data = raw_data
+        # print(self.raw_data)
+        coord_2_zip = []
+        un_zip_shape = []
+        for coord in list(self.raw_data.coords):
+            if coord not in ["mixer"]:
+                coord_2_zip.append(coord)
+                un_zip_shape.append(np.array(self.raw_data.coords[coord]).shape[0])
+
+        self.un_zip_size = tuple(un_zip_shape)
         
+        self.raw_data = self.raw_data.stack(compressed=tuple(coord_2_zip))
+        # print(self.raw_data)
+        return self.un_zip_size
+    
+    def _unzip_stateArray_with_shape(self, state_array:np.ndarray, shape:tuple=None)->np.ndarray:
+        """ Reshape the self.state_data_array into the shape = (stacked_shape, index) """
+        if shape is not None:
+            self.un_zip_size = shape
+        
+        return state_array.reshape(shape) 
 
     def _start_analysis( self ):
         """ Used to start analysis which might be time costly """
-
-        training_darray = self.raw_data.stack( new_index=('index', 'prepared_state'))
-        training_darray = training_darray.transpose( "new_index", "mixer" )
-
+        self._zip_data()
+        training_darray = self.raw_data.transpose( "compressed", "mixer" )
+        cords = list(training_darray.coords)
+        cords.remove("index")
+        cords.remove("mixer")
+        cords.remove("compressed")
+        cords.append("index")
+        
         self.__predict_label = self.cluster_model.predict( training_darray.values )
-
         # Create the DataArray with named dimensions
-        label_darray = xr.DataArray( self.__predict_label, dims=["new_index"] )
-        # print(label_darray)
-        label_darray = label_darray.assign_coords( new_index=training_darray.coords["new_index"])
-        label_darray = label_darray.unstack("new_index")
-        label_darray = label_darray.transpose( "prepared_state", "index" )
-        # print(label_darray)
+        label_darray = xr.DataArray( self.__predict_label, dims=["compressed"] )
+        label_darray = label_darray.assign_coords( compressed=training_darray.coords["compressed"])
+        label_darray = label_darray.unstack("compressed")
 
+        label_darray = label_darray.transpose(*tuple(cords))
+        
         self.label_map._import_data(label_darray)
         self.label_map._start_analysis()
-        state_darray = self.label_map._export_result()
+        state_darray = self._unzip_stateArray_with_shape(self.label_map._export_result())
         self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=state_darray, minlength=2)
         self.state_probability = self.state_population/ state_darray.shape[-1]
         self.result = state_darray
