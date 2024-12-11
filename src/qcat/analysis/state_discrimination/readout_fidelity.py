@@ -17,6 +17,18 @@ class GMMROFidelity( QCATAna ):
     @property
     def centers ( self )->np.ndarray:
         return self.discriminator.cluster_model.means_
+    @property
+    def mapped_centers (self)->np.ndarray:
+        """ retrun mapped centers which idx=0 is |0> center, idx=1 is |1> center... etc. """
+        mapped_centers = []
+        
+        for group, state in enumerate(self.label_map.label_assign.result):
+            if group == 0:
+                mapped_centers.append(list(self.discriminator.cluster_model.means_[0]))
+            else:
+                mapped_centers.insert(state,list(self.discriminator.cluster_model.means_[group]))
+        
+        return np.array(mapped_centers)        
     
     def _import_data( self, data:xr.DataArray ):
         """        
