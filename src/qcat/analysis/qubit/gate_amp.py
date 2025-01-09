@@ -5,7 +5,7 @@ from lmfit.model import ModelResult
 
 def exp_cos(n, amp, tau, period, offset):
     return amp * np.exp(-n/tau) * np.cos(2 * np.pi * n/period)+offset
-def _SQDB_model():
+def gate_amp_model():
     model = Model(exp_cos)
     
     # Create a parameters object
@@ -13,9 +13,9 @@ def _SQDB_model():
     
     return model, params
 
-def SQDB_fitting( seq, data )->ModelResult:
+def gate_amp_fitting( seq, data )->ModelResult:
     
-    model, params = _SQDB_model()
+    model, params = gate_amp_model()
     params['amp'].set(guess_amp( data ))
     params['offset'].set(guess_offset( data ))
     params['tau'].set(guess_tau(seq,data), min=0, max=seq[-1]) 
