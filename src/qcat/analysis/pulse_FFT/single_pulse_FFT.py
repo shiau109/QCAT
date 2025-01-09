@@ -2,13 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 定義一個時域函數（例如：正弦波加高斯波）
-gate_time = 400
-t = np.linspace(0, gate_time, gate_time, endpoint=False)  # 時間軸
-# f_signal = np.sin(2 * np.pi * 1 * x) + 0.5 * np.cos(2 * np.pi * 3 * x)  # 組合波形
+gate_time = 400 # ns
+IF_freq = 50 # MHz
+
+T = gate_time/1000
+t = np.linspace(0, T, gate_time, endpoint=False)  # 時間軸
+
 sfactor = 4
-sigma = gate_time / sfactor
-f_signal = np.sin(2 * np.pi * t)
-# f_signal = np.exp(-((t - gate_time/2) ** 2) / (2 * sigma**2))
+sigma = T / sfactor
+# envelope = np.exp(-((t - actual_gate_time/2) ** 2) / (2 * sigma**2))
+envelope = (0.318 - 0.005 * (t-T/2)**2)*(np.cos((np.pi/T)*(t-T/2)))**2
+
+IF_pulse = np.sin(2 * np.pi * IF_freq * t)
+f_signal = IF_pulse * envelope # 組合波形
+
+
 # 傅立葉變換
 f_transform = np.fft.fft(f_signal)  # 傅立葉變換
 frequencies = np.fft.fftfreq(len(t), d=(t[1] - t[0]))  # 計算頻率
