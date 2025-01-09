@@ -6,7 +6,7 @@ from qcat.visualization.TLS_loss_plot import *
 
 
 # 指定資料夾路徑
-result_folder = r"C:\Users\ASUS\Documents\python training\舊檔案\coil\result"  # 替換為你的result資料夾路徑
+result_folder = r"C:\Users\ASUS\Documents\python training\新增資料夾\ITRI367_resmxv2\result"  # 替換為你的result資料夾路徑
 
 # 執行分析
 fitting_results = analyze_data(result_folder)
