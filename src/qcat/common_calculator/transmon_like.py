@@ -1,13 +1,13 @@
 import math
 import numpy as np
-f_q = 4378
+f_q = 4000
 
 # ejec_ratio = 50
 # E_c = f_q/ (np.sqrt(8*ejec_ratio)-1)
 # E_j = E_c *ejec_ratio
 
 
-E_c = 216
+E_c = 210
 E_j = (f_q+E_c)**2/ (8*E_c)
 ejec_ratio = E_j/E_c
 print(E_c)
