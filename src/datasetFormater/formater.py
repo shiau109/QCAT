@@ -1,0 +1,1 @@
+""" Protocols for raw data dataset. Coordinates, data variables, etc."""
