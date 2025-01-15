@@ -122,7 +122,7 @@ class GMMLabelMap():
 
         """
         if "prepared_state" not in list(data.dims):
-            print("No axis is called 'state' in coords")
+            print("No axis is called 'prepared_state' in coords")
             data = None     
         self.raw_data = data
 

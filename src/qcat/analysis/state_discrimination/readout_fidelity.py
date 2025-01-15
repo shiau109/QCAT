@@ -17,6 +17,18 @@ class GMMROFidelity( QCATAna ):
     @property
     def centers ( self )->np.ndarray:
         return self.discriminator.cluster_model.means_
+    @property
+    def mapped_centers (self)->np.ndarray:
+        """ retrun mapped centers which idx=0 is |0> center, idx=1 is |1> center... etc. """
+        mapped_centers = []
+        
+        for group, state in enumerate(self.label_map.label_assign.result):
+            if group == 0:
+                mapped_centers.append(list(self.discriminator.cluster_model.means_[0]))
+            else:
+                mapped_centers.insert(state,list(self.discriminator.cluster_model.means_[group]))
+        
+        return np.array(mapped_centers)        
     
     def _import_data( self, data:xr.DataArray ):
         """        
@@ -132,7 +144,7 @@ class G1DROFidelity( QCATAna ):
         self.discriminator._start_analysis()
 
         self.g1d_dist = []
-        for i in [0,1]:
+        for i in range(np.array(self.raw_data.coords['prepared_state']).shape[0]):
             self.g1d_dist.append( self._fit_distribution(self.raw_data[i]) )
                
 
@@ -187,6 +199,8 @@ class G1DROFidelity( QCATAna ):
         area = peak_value * sigma*np.sqrt(2*np.pi)
         probability = area/np.sum(area) 
         return probability
+
+
     
 
 if __name__ == '__main__':
@@ -204,7 +218,7 @@ if __name__ == '__main__':
     Qe = np.random.normal(e[1], std_dev, num_samples) 
     # ( ["state","mixer","index"], 
     data =  np.array([[Ig, Qg], [Ie, Qe]])
-    coords= [ ("prepared_state", [0,1]), ("mixer",["I","Q"]), ("index",np.arange( num_samples ))]
+    coords= [ ("compressed", [0,1]), ("mixer",["I","Q"]), ("index",np.arange( num_samples ))]
 
     dataarray = xr.DataArray( data=data, coords=coords )
 
@@ -216,7 +230,7 @@ if __name__ == '__main__':
     print(fidelity_qcat.state_probability)
 
     import matplotlib.pyplot as plt
-    plt.plot( dataarray.sel(mixer="I", prepared_state=0).values, dataarray.sel(mixer="Q", prepared_state=0).values, "o" )
-    plt.plot( dataarray.sel(mixer="I", prepared_state=1).values, dataarray.sel(mixer="Q", prepared_state=1).values, "o" )
+    plt.plot( dataarray.sel(mixer="I", compressed=0).values, dataarray.sel(mixer="Q", compressed=0).values, "o" )
+    plt.plot( dataarray.sel(mixer="I", compressed=1).values, dataarray.sel(mixer="Q", compressed=1).values, "o" )
     # plt.plot( Ie, Qe, 'o' )
     plt.show()

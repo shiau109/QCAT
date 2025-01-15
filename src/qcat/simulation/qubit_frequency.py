@@ -36,7 +36,7 @@ class FluxTunablTransmon(Transmon):
 
 
 import matplotlib.pyplot as plt
-from qcat.simulation.chi_qubit_coupler import chi_qc
+from qcat.common_calculator.chi_qubit_coupler import chi_qc
 # Step 1: Define the function f(x, y)
 def population(x, y, crosstalk):
     qubit = FluxTunablTransmon( 18000, 200 )
