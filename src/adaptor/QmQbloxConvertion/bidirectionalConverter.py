@@ -75,7 +75,7 @@ class QQAdapter(ABC):
 
 
 ####################################
-##########    Examples    ##########
+######    Implementations    #######
 ####################################
 
 class FluxCavConverter(QQAdapter):
