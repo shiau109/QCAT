@@ -1,6 +1,6 @@
 import math
 import numpy as np
-f_q = 4000
+f_q = 2650
 
 # ejec_ratio = 50
 # E_c = f_q/ (np.sqrt(8*ejec_ratio)-1)
@@ -23,5 +23,5 @@ e_0 = odd_even_diff(0,E_c,E_j)
 e_1 = odd_even_diff(1,E_c,E_j)
 e_2 = odd_even_diff(2,E_c,E_j)
 print( f"0: {e_0}, 1:{e_1}, 2:{e_2}")
-print(f"1-0:{e_1-e_0}")
-print(f"2-1:{e_2-e_1}")
+print(f"1-0:{e_1-e_0},{np.log10(np.abs(e_1-e_0)/f_q)}")
+print(f"2-1:{e_2-e_1},{np.log10(np.abs(e_2-e_1)/f_q)}")
