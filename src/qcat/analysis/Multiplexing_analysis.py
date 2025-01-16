@@ -245,10 +245,14 @@ class analysis_tools():
                 fit_err.append(result['chi_square'])
 
             _, indexs = remove_outliers_with_window(array(fit_err),int(len(fit_err)/3),m=1)
-            
+
             for i in indexs:
                 self.collected_freq.append(freq_fit[i])
                 self.collected_flux.append(list(self.bias)[i])
+            
+            # self.collected_freq = freq_fit
+            # self.collected_flux = self.bias
+
             self.fit_results = cos_fit_analysis(array(self.collected_freq),array(self.collected_flux))
             paras = array(self.fit_results.attrs['coefs'])
 
@@ -1035,3 +1039,13 @@ class Multiplex_analyzer(QCATAna,analysis_tools):
 
 
 
+if __name__ == "__main__":
+    from xarray import open_dataset
+    ds = open_dataset("/Users/ratiswu/Downloads/qm experiment data/Find_Flux_Period_QMtoQblox_1.nc")
+
+    for var in ds.data_vars:
+        if str(var).split("_")[-1] != 'freq':
+            ANA = Multiplex_analyzer('m6')
+            ANA._import_data(ds,2)
+            ANA._start_analysis(var_name=var)
+            ANA._export_result("")
