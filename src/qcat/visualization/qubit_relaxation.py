@@ -37,6 +37,47 @@ def plot_time_dep_qubit_T1_relaxation_2Dmap( time, evo_time, signal, ax, fit_res
 
     return ax
 
+def plot_and_save_T1_spectrum(dataset, time, flux, acc_T1):
+    for ro_name, data in dataset.data_vars.items():
+        fig, ax = plt.subplots()
+        ax.set_title('pcolormesh')
+        ax.set_xlabel("Flux")
+        ax.set_ylabel("T1 (us)")
+        pcm = ax.pcolormesh(flux+dataset.attrs["z_offset"],time, data.values[0].T, cmap='RdBu')# , vmin=z_min, vmax=z_max)
+        ax.plot(flux+dataset.attrs["z_offset"], acc_T1)
+        ax.axvline(x=dataset.attrs["z_offset"], color='black', linestyle='--', label='idle')
+        ax.text(0.04, 
+                0.96, 
+                f"Mean T1 = {np.mean(acc_T1):.4}+-{np.std(acc_T1):.2}",
+                fontsize=9, 
+                color="black",
+                ha='left', 
+                va='top',
+                transform=ax.transAxes,
+                bbox=dict(facecolor='white', alpha=0.5))
+        ax.legend()
+        
+        plt.colorbar(pcm, label='Value')
+
+
+    plt.show()
+    
+def plot_and_save_T1_spectrum_rep(dataset, rep, flux, acc_T1):
+    for ro_name, data in dataset.data_vars.items():
+        fig, ax = plt.subplots()
+        ax.set_title('pcolormesh')
+        ax.set_xlabel("Flux")
+        ax.set_ylabel("rep time")
+        pcm = ax.pcolormesh(flux+dataset.attrs["z_offset"],rep, acc_T1, cmap='RdBu')# , vmin=z_min, vmax=z_max)
+        ax.axvline(x=dataset.attrs["z_offset"], color='black', linestyle='--', label='ref IF')
+        ax.legend()
+        
+        plt.colorbar(pcm, label='Value')
+
+
+plt.show()
+
+
 def plot_time_dep_qubit_T2_relaxation_2Dmap( time, evo_time, signal, ax, fit_result=None ):
     """
     x shape (M,) 1D array
