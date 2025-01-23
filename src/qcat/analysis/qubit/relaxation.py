@@ -1,76 +1,80 @@
+
+
+
+
+from qcat.analysis.base import QCATAna
+from qcat.analysis.function_fitting.fit_exp_decay import FitExponentialDecay
+from xarray import DataArray
 import numpy as np
-from lmfit import Model, Parameters
-from lmfit.models import ExponentialModel
-from lmfit.model import ModelResult
+import matplotlib.pyplot as plt
 
-import pandas as pd
-import typing
-def exp_decay(t, amp, tau, offset):
-    return amp * np.exp(-t/tau) +offset
-
-
-
-def _qubit_relaxation_model():
-    # Create a model from the damped_oscillation function
-    model = Model(exp_decay)
-
-    # Create a parameters object
-    params = model.make_params(amp=0.02, tau=500, offset=0)
-
-    # params['amp'].set(min=0.0, max=1.0) 
-    # params['tau'].set(min=0, max=1e6) 
-
-    # params['offset'].set(min=-1.0, max=1.0)
-    return model, params
-
-def qubit_relaxation_fitting( time, data )->ModelResult:
-
-    model, params = _qubit_relaxation_model()
-    # max_val = np.max(data)
-    # min_val = np.min(data)
-    params['amp'].set(data[0]-data[-1])#, vary=False)
-    params['offset'].set(data[-1])#averaging(data,6))
-    params['tau'].set(guess_tau(time,data), min=0, max=time[-1]) 
-    
-    result = model.fit(data, params, t=time)
-    return result
-
-def averaging(data, n_avg):
-    value = 0
-    for i in range(n_avg):
-        value += data[-i]
-        if n_avg != 0:
-            return i/n_avg
-        else: return 1
-
-def qubit_relaxation_statistic( time, data:np.ndarray ):
+class RelaxationAnalysis(QCATAna):
     """
-    Parameters:\n
-    time: numpy array\n
-    data: numpy array with shape (M,N)\n
-
+    Class for analyzing exponential decay data.
     """
-    all_result = []
-    for i in range(data.shape[0]):
-        
-        fit_data = data[i]
-        all_result.append( qubit_relaxation_fitting(time,fit_data).params.valuesdict() )
 
-    df_result = pd.DataFrame(all_result)
-    return df_result
+    def __init__(self, data: DataArray):
+        super().__init__()
+        self._import_data(data)
 
-def guess_tau( time, data ):
-    # Calculate absolute differences between array elements and target value
-    ooe = guess_amp(data)/np.e +guess_offset(data)
-    absolute_diff = np.abs(data - ooe)
-    
-    # Find index of the minimum absolute difference
-    nearest_index = np.argmin(absolute_diff)
-    return time[nearest_index] 
+    def _import_data(self, data):
+        if not isinstance(data, DataArray):
+            raise ValueError("Input data must be an xarray.DataArray.")
 
-def guess_amp( data ):
-    amp = (data[0]-data[-1])
-    return amp 
+        if "time" not in data.coords:
+            raise ValueError("No 'time' coordinate in the input DataArray.")
 
-def guess_offset( data ):
-    return data[-1]
+        self.data = data
+        self.data.coords["time"] = self.data.coords["time"] /1000
+    def _start_analysis(self):
+        # Initialize the fitting class
+        fit_exp_decay = FitExponentialDecay(self.data.rename({"time": "x"}))
+
+        # Generate initial parameter guesses
+        guess_params = fit_exp_decay.guess()
+
+        # Perform the fitting process
+        fit_result = fit_exp_decay.fit()
+        self.fit_result = fit_result
+
+        # Plot the results
+        self._plot_results()
+
+    def _plot_results(self):
+        x = self.data.coords["time"].values
+        y = self.data.values
+
+        # Create a figure
+        fig, ax = plt.subplots()
+        ax.plot(x, y, 'o', label="Data", markersize=4)
+
+        if self.fit_result is not None:
+            ax.plot(x, self.fit_result.best_fit, '-', label="Fit")
+            a = self.fit_result.params['a'].value
+            tau = self.fit_result.params['tau'].value
+            c = self.fit_result.params['c'].value
+
+            ax.text(0.05, 0.95, f"a: {a:.3e}\nτ: {tau:.3f}\nc: {c:.3f}",
+                    transform=ax.transAxes, fontsize=10, verticalalignment='top')
+
+        ax.set_title("Exponential Decay Analysis")
+        ax.set_xlabel("Time (us)")
+        ax.set_ylabel("Signal")
+        ax.legend()
+        self.fig = fig
+
+    def _export_result(self, save_path=None):
+        pass
+
+
+
+if __name__ == '__main__':
+    import xarray as xr
+    dataset = xr.open_dataset(r"d:\Data\Qubit\5Q4C0430\20241121_DR3_5Q4C_0430#7_q2q3\TPS\Q1\20250112_154052_T1_rep\T1_rep.nc")
+    print(dataset)
+    for ro_name, data in dataset.data_vars.items():
+        data.attrs = dataset.attrs
+        data.name = ro_name
+        my_ana = RelaxationAnalysis(data.sel(mixer="I"))
+        my_ana._start_analysis()
+        plt.show()

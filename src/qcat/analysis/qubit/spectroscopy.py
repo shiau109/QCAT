@@ -342,33 +342,27 @@ def get_biasWithFq_from(fitting_popts:list,target_fq_Hz:float, flux_guard:float=
 
 
 
+
+
+        
+
 if __name__ == "__main__":
-    # required inputs
-    period = 0.0 # flux period 
-    xyf = array([]) # sweep xyf array
-    z = array([]) # sweep z array offset on sweet spot
-    ref_z = 0 # sweet spot bias
-    ii = array([]) # I chennel signal array
-    qq = array([]) # Q chennel signal array
-    ref_IQ = [0,0] # ground state center I,Q
-    json_path = "" # path to save the filltered data points
-    peak_threshold = 2.0
+    import xarray as xr
+    import numpy as np
 
-    i_want_fq_at = 4e9
+    # Example 1D arrays
+    data = np.array([10, 20, 30, 40, 50])  # Data values
+    coords = np.array([1, 2, 3, 4, 5])    # Coordinates
 
-    # program start here
+    # Create a DataArray
+    data_array = xr.DataArray(
+        data=data,
+        coords={"x": coords},  # Name the coordinate, e.g., "x"
+        dims="x"               # Name the dimension, e.g., "x"
+    )
 
-    # x2static, y2static, mag2static = data2plot(xyf,z+ref_z,ii,qq,specified_refIQ=ref_IQ,qblox=False,filter2D_threshold=peak_threshold,plot_scatter=False)
-    
-
-    # x2fit, y2fit = mag_static_filter(array(x2static),array(y2static),array(mag2static))
-    # data2fit = {"x":x2fit,"y":y2fit}
-    
-    # with open(json_path, "w") as json_file:
-    #     json.dump(data2fit, json_file)
-
-    fitting_paras = qubit_flux_spec_fitting
-    # fitting_paras = fq_fit(period, ref_z, json_path,target_q="q",savefig_path="",saveParas=True,plot=False) 
-
-    # get z-bias according to the wantted fq
-    wantted_z = get_biasWithFq_from(fitting_paras, i_want_fq_at)
+    my_fit = FluxTransmonFrequency()   
+    params = my_fit.guess()
+    params.add('d', value=0, vary=False)
+    params.add('Ec', value=0.16, vary=False)  
+    params.add('offset', value=-0.05, vary=False)  
