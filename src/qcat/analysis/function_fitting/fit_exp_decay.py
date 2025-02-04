@@ -3,7 +3,7 @@ from lmfit import Model
 from lmfit.model import ModelResult
 from numpy import exp, linspace, max, min, mean
 
-from qcat.analysis.function_fitting import FunctionFitting
+from .function_fitting import FunctionFitting
 
 
 class FitExponentialDecay(FunctionFitting):

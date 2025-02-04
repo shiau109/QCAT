@@ -5,7 +5,7 @@ from numpy import ndarray, fft, linspace
 from numpy import cos, abs, exp, max, min, mean, argmax
 from numpy import pi
 
-from qcat.analysis.function_fitting import FunctionFitting
+from .function_fitting import FunctionFitting
 
 
 class FitBasePowerLaw(FunctionFitting):
