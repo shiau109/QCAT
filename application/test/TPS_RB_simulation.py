@@ -91,31 +91,6 @@ class SQGateGenerator:
         }
         return self.native_gates
 
-    def get_ideal_native_gate(self):
-        """
-        Get the ideal native gates by setting Δ=0 (and no rotation error).
-        """
-        detuning   = 0       # ideal: no detuning
-        t_pulse = self.t_pulse
-        # For an ideal gate, we assume perfect drive amplitude.
-        Omega   = (np.pi / self.t_pulse)  
-        gate_I   = (-1j * effective_hamiltonian(0, detuning, 0) * t_pulse).expm()
-        gate_X   = (-1j * effective_hamiltonian(0, detuning, Omega) * t_pulse).expm()
-        gate_sX  = (-1j * effective_hamiltonian(0, detuning, Omega/2) * t_pulse).expm()
-        gate_isX = (-1j * effective_hamiltonian(np.pi, detuning, Omega/2) * t_pulse).expm()
-        gate_Y   = (-1j * effective_hamiltonian(np.pi/2, detuning, Omega) * t_pulse).expm()
-        gate_sY  = (-1j * effective_hamiltonian(np.pi/2, detuning, Omega/2) * t_pulse).expm()
-        gate_isY = (-1j * effective_hamiltonian(-np.pi/2, detuning, Omega/2) * t_pulse).expm()
-        ideal_native = {
-            "I":   gate_I,
-            "X":   gate_X,
-            "sX":  gate_sX,
-            "isX": gate_isX,
-            "Y":   gate_Y,
-            "sY":  gate_sY,
-            "isY": gate_isY
-        }
-        return ideal_native
 
     def get_clifford_gate(self):
         """
@@ -158,46 +133,6 @@ class SQGateGenerator:
         ]
         return clifford_gate
 
-    def get_ideal_clifford_gate(self):
-        """
-        Build the ideal Clifford gates from the ideal native gates.
-        """
-        ideal_native = self.get_ideal_native_gate()
-        gate_I   = ideal_native["I"]
-        gate_X   = ideal_native["X"]
-        gate_Y   = ideal_native["Y"]
-        gate_sX  = ideal_native["sX"]
-        gate_isX = ideal_native["isX"]
-        gate_sY  = ideal_native["sY"]
-        gate_isY = ideal_native["isY"]
-
-        ideal_clifford = [ 
-            gate_I, 
-            gate_X, 
-            gate_Y, 
-            gate_X * gate_Y, 
-            gate_sY * gate_sX, 
-            gate_isY * gate_sX, 
-            gate_sY * gate_isX, 
-            gate_isY * gate_isX,
-            gate_sX * gate_sY, 
-            gate_isX * gate_sY, 
-            gate_sX * gate_isY, 
-            gate_isX * gate_isY, 
-            gate_sX, 
-            gate_isX, 
-            gate_sY, 
-            gate_isY, 
-            gate_sX * gate_sY * gate_isX, 
-            gate_sX * gate_isY * gate_isX, 
-            gate_sY * gate_X, 
-            gate_isY * gate_X, 
-            gate_sX * gate_Y, 
-            gate_isX * gate_Y,
-            gate_sX * gate_sY * gate_sX, 
-            gate_isX * gate_isY * gate_isX, 
-        ]
-        return ideal_clifford
 
 
 
@@ -274,16 +209,18 @@ class RandomizedBenchmarking():
             proj_init = init_state * init_state.dag()
             fid = np.real(qt.expect(proj_init, state))
             fidelities.append(fid)
-        return np.mean(fidelities)
+        return np.mean(fidelities), np.std(fidelities)
     
     def simulate_rb( self, sequence_lengths ):
         self.noisy_clifford_gate = self.gate_gen.get_clifford_gate()
         rb_fidelities = []
+        rb_std = []
         for m in sequence_lengths:
-            avg_fid = self.simulate_rb_single_length(m)
+            avg_fid, std = self.simulate_rb_single_length(m)
             rb_fidelities.append(avg_fid)
-            print(f"Sequence length {m}: Average Fidelity = {avg_fid:.4f}")
-        return rb_fidelities
+            rb_std.append(std)
+            # print(f"Sequence length {m}: Average Fidelity = {avg_fid:.4f}")
+        return rb_fidelities, rb_std
 
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------
@@ -298,7 +235,7 @@ if __name__ == '__main__':
     myRB.gate_gen.detuning = 0.005
     myRB.gate_gen.rot_err = 0.01
 
-    rb_fidelities = myRB.simulate_rb( sequence_lengths )
+    rb_fidelities, _ = myRB.simulate_rb( sequence_lengths )
 
 
 

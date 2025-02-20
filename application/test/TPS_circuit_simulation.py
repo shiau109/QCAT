@@ -114,18 +114,6 @@ plt.title("Bloch Points for 7 Native Gates")
 plt.show()
 
 
-clifford_gate = [ gate_I, gate_X, gate_Y, gate_X*gate_Y, 
-    gate_sY*gate_sX, gate_isY*gate_sX, gate_sY*gate_isX, gate_isY*gate_isX,
-    gate_sX*gate_sY, gate_isX*gate_sY, gate_sX*gate_isY, gate_isX*gate_isY, 
-    gate_sX, gate_isX, gate_sY, gate_isY, 
-
-    gate_sX*gate_sY*gate_isX, gate_sX*gate_isY*gate_isX, 
-
-    gate_sY*gate_X, gate_isY*gate_X, gate_sX*gate_Y, gate_isX*gate_Y,
-
-    gate_sX*gate_sY*gate_sX, gate_isX*gate_isY*gate_isX, 
-
-]
 operations = [gate_I]*100
 traj_repeated, final_state = circuit_application(operations, initial_state, p_depol)
 
