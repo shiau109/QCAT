@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-w1 = 4.727
-w2 = np.linspace(5., 6.5, 200)
-w3 = 4.910
+w1 = 3.63
+w2 = np.linspace(4., 6.5, 250)
+w3 = 3.757
  
 a1 = -0.205
 a2 = -0.150
@@ -41,9 +41,9 @@ ax.plot(w2,(zz3_13+zz4_13)*1e9/1e6,'b', label="$g_{indirect}$")
 # ax.plot(w2,(zz4_13_)*1e9/1e6,'--g')
 ax.plot(w2,(zz2_13+zz3_13+zz4_13)*1e9/1e6,'k', label="Total")
 # ax.plot(w2,(zz2_13+zz3_13_+zz4_13_)*1e9/1e6,'--k')
-ax.hlines(0, 5.1, 6.5, color="gray", linestyle="--", lw=2)
+ax.hlines(0, 4, 6.5, color="gray", linestyle="--", lw=2)
 
-ax.set_xlim(5.1, 6.5)
+# ax.set_xlim(5.1, 6.5)
 ax.set_ylim(-3, 3)
 ax.tick_params(axis='both', which='major', labelsize=14)
 ax.set_xlabel("Coupler Frequency (GHz)", fontsize=20)
@@ -57,7 +57,7 @@ fig, ax = plt.subplots(1)
 
 ax.plot(w2,np.abs(zz2_13+zz3_13+zz4_13)*1e9/1e6,'k')
 ax.set_yscale("log")
-ax.set_xlim(5.1, 6.5)
+# ax.set_xlim(5.1, 6.5)
 ax.set_ylim(0.01, 3)
 # ax.set_xticks( [5,5.5,6,6.5],fontsize=14)
 # ax.set_yticks( [0.01,0.1,1],fontsize=14)
