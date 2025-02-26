@@ -1,5 +1,5 @@
 from qcat.analysis.base import QCATAna
-from qcat.analysis.common_fitting.fit_powerlaw_base import FitBasePowerLaw
+from qcat.analysis.function_fitting.fit_powerlaw_base import FitBasePowerLaw
 from qcat.visualization.qubit.plot_cliffordRB import PainterCliffordRB
 from xarray import Dataset
 import numpy as np

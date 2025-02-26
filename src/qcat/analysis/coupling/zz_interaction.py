@@ -1,5 +1,5 @@
 from qcat.analysis.base import QCATAna
-from qcat.analysis.common_fitting.fit_damped_oscillation import FitDampedOscillation
+from qcat.analysis.function_fitting.fit_damped_oscillation import FitDampedOscillation
 from xarray import DataArray
 from qcat.visualization.qubit.plot_ramsey import PainterT2Ramsey
 import numpy as np
