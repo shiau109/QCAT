@@ -1,68 +1,57 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import xarray as xr
 
+from qcat.common_calculator.qcq_zz_interaction import ZZ_interaction
+from qcat.analysis.qubit.zz_interaction import ZZinteractionEcho
 
-w1 = 3.63
-w2 = np.linspace(4., 6.5, 250)
-w3 = 3.757
- 
-a1 = -0.205
-a2 = -0.150
-a3 = -0.205
- 
-g12 = 0.070#0.0813;
-g23 = 0.070#0.0813;
-g13 = 0.005#0.0038; #
- 
-d12 = w1-w2
-d13 = w1-w3
-d32 = w3-w2
-# ########  Nanjing¡¦s formula 
-zz2_13 = 2*g13**2*(1./(d13-a3)-1./(d13+a1))
-zz3_13 = 2*g13*g12*g23*(2./(d13-a3)/d12 - 2./(d13+a1)/d32 + 2./d12/d32)
-zz4_13 = 2*g12**2*g23**2*(1./d12**2./(d13-a3) - 1./d32**2./(d13+a1) + 1./(d12+d32-a2)*(1./d12+1./d32)**2)
- 
-# ####### Tsinghua's formula
-zz2_13_ = 2*g13**2*(1./(d13-a3)-1./(d13+a1))
-zz3_13_ = 2*g13*g12*g23*((2./(d13-a3)-1./d13)/d12+ (2./(-d13-a1)+1/d13)/d32)
-zz4_13_ = (2*g12**2*g23**2*(1./d12+1./d32)**2./(d12+d32-a2)
-            +(g12**2*g23**2./d12**2)*(2./(d13-a3)-1./d13-1./d32)
-            +(g12**2*g23**2./d32**2)*(2./(-d13-a1)+1./d13-1./d12))
+# Instantiate the calculator with default values
+calc = ZZ_interaction()
 
+# Compute Nanjing's formulas and Tsinghua's formulas
+zz2_nanjing, zz3_nanjing, zz4_nanjing = calc.nanjing_formula()
+zz2_tsinghua, zz3_tsinghua, zz4_tsinghua = calc.tsinghua_formula()
 
-fig, ax = plt.subplots(1)
+# Create a figure and axis for the ZZ interaction comparison plot
+fig1, ax1 = plt.subplots(figsize=(8, 5))
+ax1.plot(calc.w2, np.abs(zz2_nanjing + zz3_nanjing + zz4_nanjing)*1000, label="Nanjing zz")
+# ax1.plot(calc.w2, np.abs(zz2_nanjing+np.zeros(zz3_nanjing.shape) )*1000, label="Nanjing zz2")
+ax1.plot(calc.w2, np.abs(zz3_nanjing + zz4_nanjing)*1000, label="Nanjing zz3+4")
+# Uncomment the following line to plot Tsinghua's formula as well:
+ax1.plot(calc.w2, np.abs(zz2_tsinghua + zz3_tsinghua + zz4_tsinghua)*1000, label="Tsinghua zz", linestyle='--')
+ax1.set_xlabel("w2")
+ax1.set_ylabel("zz2 values")
+ax1.legend()
+ax1.set_title("Comparison of zz2 computed from two formulas")
 
-ax.plot(w2,(zz2_13)*np.ones(w2.shape[0])*1e9/1e6,'r', label="$g_{direct}$")
-# ax.plot(w2,(zz3_13)*1e9/1e6,'b')
-ax.plot(w2,(zz3_13+zz4_13)*1e9/1e6,'b', label="$g_{indirect}$")
+# Open the netCDF dataset with your data.
+dataset = xr.open_dataset(r"d:\Data\Qubit\5Q4C0430\20241121_DR3_5Q4C_0430#7_q2q3\TPS\20250112_122247_find_ZZfree_q1_q2\find_ZZfree_q1_q2.nc")
+dataset = dataset.sel(mixer="I")
+print(dataset)
 
-# ax.plot(w2,(zz3_13_)*1e9/1e6,'--b')
-# ax.plot(w2,(zz4_13)*1e9/1e6,'g')
-# ax.plot(w2,(zz4_13_)*1e9/1e6,'--g')
-ax.plot(w2,(zz2_13+zz3_13+zz4_13)*1e9/1e6,'k', label="Total")
-# ax.plot(w2,(zz2_13+zz3_13_+zz4_13_)*1e9/1e6,'--k')
-ax.hlines(0, 4, 6.5, color="gray", linestyle="--", lw=2)
+# Extract the desired data variable and update its attributes.
+data = dataset["q1_ro"]
+data.attrs = dataset.attrs
+data.name = "q1_ro"
 
-# ax.set_xlim(5.1, 6.5)
-ax.set_ylim(-3, 3)
-ax.tick_params(axis='both', which='major', labelsize=14)
-ax.set_xlabel("Coupler Frequency (GHz)", fontsize=20)
-ax.set_ylabel("ZZ interaction (MHz)", fontsize=20)
-ax.legend()
-plt.tight_layout()
-plt.show()
+# Create an instance of the ZZinteractionEcho analysis class and run the analysis.
+analysis = ZZinteractionEcho(data)
+analysis._start_analysis()
 
-fig, ax = plt.subplots(1)
+# Build a new DataArray from the analysis result for frequency.
+output_dataarray = xr.DataArray(
+    data=analysis.statistic_result["frequency"].values,
+    dims=["flux"],
+    coords=dict(
+        flux=data.coords["flux"].values,
+    )
+)
+# print(data.coords["flux"].values)
+# Compute x values based on the flux coordinate.
+x = np.sqrt(8 * 0.165 * 42 * abs(np.cos((data.coords["flux"].values + 0.115) / 0.627 * np.pi))) - 0.165
+print(x[0],x[-1])
 
+# Create a new figure and axis for the frequency vs x plot.
+ax1.plot(x, analysis.statistic_result["frequency"].values, label="data")
 
-ax.plot(w2,np.abs(zz2_13+zz3_13+zz4_13)*1e9/1e6,'k')
-ax.set_yscale("log")
-# ax.set_xlim(5.1, 6.5)
-ax.set_ylim(0.01, 3)
-# ax.set_xticks( [5,5.5,6,6.5],fontsize=14)
-# ax.set_yticks( [0.01,0.1,1],fontsize=14)
-ax.tick_params(axis='both', which='major', labelsize=14)
-ax.set_xlabel("Coupler Frequency (GHz)", fontsize=20)
-ax.set_ylabel("ZZ interaction (MHz)", fontsize=20)
-plt.tight_layout()
 plt.show()
