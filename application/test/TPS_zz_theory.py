@@ -16,7 +16,6 @@ zz2_tsinghua, zz3_tsinghua, zz4_tsinghua = calc.tsinghua_formula()
 fig1, ax1 = plt.subplots(figsize=(8, 5))
 ax1.plot(calc.w2, np.abs(zz2_nanjing + zz3_nanjing + zz4_nanjing)*1000, label="Nanjing zz")
 # ax1.plot(calc.w2, np.abs(zz2_nanjing+np.zeros(zz3_nanjing.shape) )*1000, label="Nanjing zz2")
-ax1.plot(calc.w2, np.abs(zz3_nanjing + zz4_nanjing)*1000, label="Nanjing zz3+4")
 # Uncomment the following line to plot Tsinghua's formula as well:
 ax1.plot(calc.w2, np.abs(zz2_tsinghua + zz3_tsinghua + zz4_tsinghua)*1000, label="Tsinghua zz", linestyle='--')
 ax1.set_xlabel("w2")
@@ -53,5 +52,6 @@ print(x[0],x[-1])
 
 # Create a new figure and axis for the frequency vs x plot.
 ax1.plot(x, analysis.statistic_result["frequency"].values, label="data")
-
+ax1.set_yscale("log")
+ax1.set_ylim(1e-2,10)
 plt.show()

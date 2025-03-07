@@ -2,20 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class ZZ_interaction:
-    # def __init__(self, 
-    #              w1=4.727, 
-    #              w3=4.910, 
-    #              a1=-0.205, a2=-0.165, a3=-0.205, 
-    #              g12=0.086, g23=0.086, g13=0.0045,
-    #              w2_range=(5.5, 7.25), 
-    #              w2_points=100):
     def __init__(self, 
-                 w1=3.63, 
-                 w3=3.757, 
+                 w1=4.727, 
+                 w3=4.910, 
                  a1=-0.205, a2=-0.165, a3=-0.205, 
-                 g12=0.076, g23=0.076, g13=0.004,
-                 w2_range=(4, 6), 
+                 g12=0.086, g23=0.086, g13=0.0045,
+                 w2_range=(5.5, 7.25), 
                  w2_points=100):
+    # def __init__(self, 
+    #              w1=3.63, 
+    #              w3=3.757, 
+    #              a1=-0.205, a2=-0.165, a3=-0.205, 
+    #              g12=0.076, g23=0.076, g13=0.004,
+    #              w2_range=(4, 6), 
+    #              w2_points=100):
         """
         Initialize the calculator with default parameter values and compute w2.
         """

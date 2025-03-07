@@ -14,6 +14,7 @@ def effective_hamiltonian(phi, Delta, Omega):
     """
     Build the effective Hamiltonian in the rotating frame.
     """
+    # return (Delta / 2) * Z + (Omega / 2) * (np.cos(phi) * X + np.sin(phi) * Y)
     return (Delta / 2) * Z + (Omega / 2) * (np.cos(phi) * X + np.sin(phi) * Y)
 
 def apply_depolarization(rho, p):
@@ -104,7 +105,7 @@ def repeated_application(op, reps, init_state, p_depol=0):
 phi_initial = 0.0       # Phase error for the first operation (radians)
 phi_second  = 0       # Phase error for the second operation
 Delta       = 0.001     # Detuning between drive and qubit frequency
-rot_err     = 0.00
+rot_err     = 0.01
 t_pulse     = 40        # Pulse duration (arbitrary units)
 Omega       = (np.pi / t_pulse) * (1 + rot_err)  # Drive amplitude
 p_depol     = 0.01    # Depolarization probability (0 means no depolarization)
@@ -112,7 +113,7 @@ p_depol     = 0.01    # Depolarization probability (0 means no depolarization)
 # -----------------------------------------------------------------------------
 # Build Hamiltonians for each operation
 H_eff_initial = effective_hamiltonian(phi_initial, Delta, Omega)
-H_eff_second  = effective_hamiltonian(phi_second, Delta, -Omega)
+H_eff_second  = effective_hamiltonian(phi_second, Delta, Omega)
 
 n_steps = 100  # Number of time steps for trajectory calculation
 
@@ -134,8 +135,8 @@ traj_repeated, final_state = repeated_application(composite_op, reps, state_afte
 # -----------------------------------------------------------------------------
 # Plotting the trajectories on the Bloch sphere
 b = Bloch()
-b.add_points(traj1, 's')         # Trajectory for the first pulse
-b.add_points(traj2, 's')         # Trajectory for the second pulse
+b.add_points(traj1, 's',"red")         # Trajectory for the first pulse
+b.add_points(traj2, 's',"blue")         # Trajectory for the second pulse
 b.add_points(traj_repeated, 's')   # Trajectory for repeated composite operations
 b.make_sphere()
 plt.show()

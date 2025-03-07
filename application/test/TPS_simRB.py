@@ -11,7 +11,7 @@ from pathlib import Path
 folder_list = ["independent","simultaneous"]
 fig, ax = plt.subplots(1)
 x = np.array([-0.08,-0.07,-0.06,-0.05,-0.04,-0.03,-0.02,-0.01,0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08])
-x = np.sqrt(8*0.2*27*abs(np.cos((x+0.115)/0.7*np.pi)))-0.2
+x = np.sqrt(8 * 0.165 * 42 * abs(np.cos((x + 0.115) / 0.627 * np.pi))) - 0.165
 all_y = []
 ro_name = "q1_ro"
 for folder_name_str in folder_list:
@@ -56,6 +56,18 @@ for folder_name_str in folder_list:
 
 
 
+# Open the netCDF dataset with your data.
+# dataarray_sim = xr.open_dataset(r"d:\Data\Qubit\5Q4C0430\20241121_DR3_5Q4C_0430#7_q2q3\TPS\simulation\RB_dispersive.nc")
+# print(dataarray_sim)
+# # Create a new figure and axis for the frequency vs x plot.
+
+# fig1, ax1 = plt.subplots(1)
+# ax1.plot(dataarray_sim["chi_error_list"].values, dataarray_sim["r_g"].values*100,"o", label="simulation")
+
+
+# ax.plot(dataarray_sim.coords["frequency"].values, dataarray_sim["r_g"].values*100,"o", label="simulation")
+
+
 
 # ax.set_title(f"{title} T2 Ramsey I data")
 
@@ -64,9 +76,9 @@ ax.set_xlabel("Coupler Frequency (GHz)", fontsize=20)
 ax.set_ylabel("Native Gate Error Rate (%)", fontsize=20)
 # ax.set_yscale("log")
 # ax.set_ylim(0.002, 0.01)
-ax.set_ylim(0.2, 1.0)
+# ax.set_ylim(0.2, 1.5)
 
-ax.set_xlim(5.1, 6.5)
+# ax.set_xlim(5.5, 7.25)
 
 # ax.plot( x, y2,"o", label="indipendent")
 ax.legend()
@@ -82,7 +94,8 @@ ax.set_ylabel("Error Rate Difference (%)", fontsize=20)
 ax.hlines(0, 5.1, 6.5, color="black", linestyle="--")
 
 # ax.set_ylim(0.2, 1.0)
-ax.set_xlim(5.1, 6.5)
+# ax.set_xlim(5.5, 7.25)
+
 plt.tight_layout()
 
 plt.show()

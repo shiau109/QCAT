@@ -29,12 +29,12 @@ class ZZInteraction( QCATAna ):
     def _start_analysis( self ):
         x = self.data.coords["coupler"].values
         y = self.data.coords["time"].values
-        x = np.sqrt(8*0.2*27*abs(np.cos((x+0.115)/0.7*np.pi)))-0.2
         zz_interaction = np.zeros(x.shape[0])
         for i in range(x.shape[0]):
             fit_data = self.data.isel(coupler=i)
             fit_ramsey = FitDampedOscillation( fit_data.rename({"time": "x"}) )
             guess_para = fit_ramsey.guess()
+            params["Ec"].set(value=0.165, vary=False)
             init_phi = np.pi/2
             guess_para.add("phi",min=init_phi*0.9, max=init_phi*1.1)
             fit_ramsey.fit()

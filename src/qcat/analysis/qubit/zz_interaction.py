@@ -38,9 +38,12 @@ class ZZinteractionEcho(QCATAna):
             fit_ramsey = FitDampedOscillation(self.data.isel(flux=i).rename({"time": "x"}))
             # (Optional) Get initial parameter guesses
             guess_params = fit_ramsey.guess()
+            guess_params["f"].min=0
             # Fit the data and extract the decay time parameter (f)
+            fit_ramsey.params = guess_params
             fit_result = fit_ramsey.fit()
             self.fit_result = fit_result
+
             statistic_freq.append(fit_result.params['f'].value)
 
         # Create a dataset containing the analysis results with "flux" as coordinate.

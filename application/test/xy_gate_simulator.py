@@ -3,15 +3,20 @@ import numpy as np
 import qutip as qt
 from scipy.optimize import minimize
 
+
+t_g = 40
+
 # parameters for each pulse
-args = {'W':4.5, 'W_d':4.5, 'A':0.127, 'b':0., 'sigma':10, 't_0': 50, 'alpha':-0.2, 'gate':'X', 'q':2}# When constructing the functions for the pulses in gauss_wave and gauss_deriv, this dictionary
+args = {'W':4.5, 'W_d':4.5, 'A':np.pi*1.11/2, 'b':0., 'sigma':10, 't_0': 50, 'alpha':-0.2, 'gate':'X', 'q':3}# When constructing the functions for the pulses in gauss_wave and gauss_deriv, this dictionary
+
 # stores the coeff depending on the gate, determined by the 'gate' in args dictionery
 gate_coeff = {'X':[1,1], 'x':[0.5,0.5], 'Y':[-1,1], 'y':[-0.5,0.5]}
 #options for mesolve
 options = {"store_final_state":True}
 
-args['b'] = args['A']/args['alpha']*0.5
-
+args['b'] = args['A']/args['alpha']*-0.
+args['sigma'] = t_g/4
+args['t_0'] = t_g/2
 def create_diagonal(q, w, w_d, a):
   if q<2:
     print('dimension must be greater or equal to 2')
@@ -35,16 +40,16 @@ ex = gate_coeff[args['gate']][0]
 ey = gate_coeff[args['gate']][1]
 
 def gauss_wave(t, args):
-  return ex*0.5*args['A']*np.exp(-0.5*((t-args['t_0'])/args['sigma'])**2)
+  return ex*args['A']*np.exp( -(((t-args['t_0'])/args['sigma'])**2)/2. ) /np.sqrt(2*np.pi)/args['sigma']
 
 def gauss_deriv(t, args):
-  return -ey*0.5*(args['b']*args['A']/(args['sigma']**2))*(t-args['t_0'])*np.exp(-0.5*((t-args['t_0'])/args['sigma'])**2)
+  return ey*args['b']*-(t-args['t_0'])/(args['sigma']**2) *gauss_wave(t, args)
 
 # Range over which the pulse will propogate
-time_range = np.linspace(0,100,1000)
+time_range = np.linspace(0,t_g,1000)
 
 X1, Y1 = create_off_terms(args['q'])
-#print(X1, Y1)
+print(X1, Y1)
 
 H1 = create_diagonal(args['q'], args['W'], args['W_d'], args['alpha'])
 

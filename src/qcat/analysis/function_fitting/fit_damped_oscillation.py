@@ -17,7 +17,7 @@ class FitDampedOscillation(FunctionFitting):
 
         self._data_parser(data)
         self.model = Model(self.model_function)
-        
+        self.params = None
     def _data_parser( self, data:DataArray ):
         if not isinstance(data, DataArray):
             raise ValueError("Input data must be an xarray.DataArray.")
@@ -59,15 +59,14 @@ class FitDampedOscillation(FunctionFitting):
 
         #tau guess
         tau_guess_dict = dict(value=t[-1]/2, min=0, max=t[-1]*2)
-        params = self.model.make_params( 
+        self.params = self.model.make_params( 
                     a=a_guess_dict,  
                     tau=tau_guess_dict,
                     f=f_guess_dict,
                     phi=phi_guess_dict,
                     c=c_guess_dict)
-        self.params = params
 
-        return params
+        return self.params
     def fit(self, data:DataArray=None)-> ModelResult:
         
         
@@ -75,8 +74,8 @@ class FitDampedOscillation(FunctionFitting):
             self._data_parser(data)
 
 
-        
-        self.guess()
+        if self.params is None:
+            self.guess()
 
         result = self.model.fit( self.y, self.params, x=self.x )
         self.result = result

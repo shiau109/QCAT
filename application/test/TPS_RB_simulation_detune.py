@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from qutip import Bloch
 import random
 from scipy.optimize import curve_fit
-from application.test.TPS_RB_simulation import RandomizedBenchmarking
+from TPS_RB_simulation import RandomizedBenchmarking,RandomizedBenchmarkingZZ
 from qcat.common_calculator.chi_qubit_coupler import chi_qc
 import xarray as xr
 from qcat.analysis.qubit.clifford_1QRB import Clifford1QRB
@@ -12,7 +12,9 @@ from qcat.analysis.qubit.clifford_1QRB import Clifford1QRB
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------
     # Main Simulation
-    myRB = RandomizedBenchmarking()
+    myRB = RandomizedBenchmarkingZZ()
+    myRB.zz_interaction = 0.001
+    # myRB = RandomizedBenchmarking()
 
     # Define a range of sequence lengths.
     length_power = np.arange(11)
@@ -21,29 +23,14 @@ if __name__ == '__main__':
     myRB.p_depol = 0.013
     myRB.gate_gen.rot_err = 0.00
 
-    qubit_frequency = 4.727
-    opt_coupler = 6.65
-    alpha_q1 = -0.2
-    alpha_qc = -0.165
-
-    coupler_freq = np.linspace( 5.5, 7.5, 10 )
-    coupling = 0.085
-
-    detuning = coupler_freq -qubit_frequency
-    opt_detuning = opt_coupler-qubit_frequency
-
-    corr_coupling = coupling*np.sqrt( (qubit_frequency+detuning)/qubit_frequency )
+    detuning = np.linspace( -0.005, 0.005, 11 )
 
 
-    fig, ax = plt.subplots(1)
-    ax.plot( qubit_frequency+detuning, chi_qc(coupling, detuning, alpha_q1, alpha_qc),"o")    
-    opt_chi = chi_qc(coupling*np.sqrt( (qubit_frequency+opt_detuning)/qubit_frequency ), opt_detuning, alpha_q1, alpha_qc)
-    print(f"opt_detuning:{opt_detuning} chi:{opt_chi}")
     sim_points = detuning.shape[-1]
     r_g_list = []
     chi_error_list = []
     for i in range(sim_points):
-        myRB.gate_gen.detuning = chi_qc(corr_coupling[i], detuning[i], alpha_q1, alpha_qc) -opt_chi
+        myRB.gate_gen.detuning = detuning[i]
         print(f"{i+1}/{sim_points} chi_error_list{myRB.gate_gen.detuning}")
 
         rb_fidelities, std = myRB.simulate_rb( sequence_lengths )
@@ -64,7 +51,7 @@ if __name__ == '__main__':
         chi_error_list.append( myRB.gate_gen.detuning )
     y = np.array(r_g_list)
     fig, ax = plt.subplots(1)
-    ax.plot( qubit_frequency+detuning, y*100,"o")
+    ax.plot( detuning, y*100,"o")
 
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.set_xlabel("Coupler Frequency (GHz)", fontsize=20)
@@ -79,12 +66,9 @@ if __name__ == '__main__':
             chi_error_list = (["frequency"],np.array(chi_error_list)),
         ),
         coords=dict(
-            frequency = qubit_frequency+detuning,
-        ),
-        attrs=dict(
-            opt_chi = opt_chi,
+            frequency = detuning,
         ),
     )
     print(output_dataarray)
-    output_dataarray.to_netcdf(r"D:\Data\Qubit\5Q4C0430\20241121_DR3_5Q4C_0430#7_q2q3\TPS\simulation\RB_dispersive.nc")
+    output_dataarray.to_netcdf(r"D:\Data\Qubit\5Q4C0430\20241121_DR3_5Q4C_0430#7_q2q3\TPS\simulation\RB_detuned_zz.nc")
     plt.show()
