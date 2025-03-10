@@ -4,14 +4,13 @@ import matplotlib.pyplot as plt
 from qutip import Bloch
 import random
 from scipy.optimize import curve_fit
-from application.test.TPS_RB_simulation import RandomizedBenchmarking
+from TPS_RB_simulation import RandomizedBenchmarking
 from qcat.common_calculator.chi_qubit_coupler import chi_qc
 import xarray as xr
 from qcat.analysis.qubit.clifford_1QRB import Clifford1QRB
 
 if __name__ == '__main__':
-    # -----------------------------------------------------------------------------
-    # Main Simulation
+
     myRB = RandomizedBenchmarking()
 
     # Define a range of sequence lengths.
@@ -26,8 +25,13 @@ if __name__ == '__main__':
     alpha_q1 = -0.2
     alpha_qc = -0.165
 
-    coupler_freq = np.linspace( 5.5, 7.5, 10 )
-    coupling = 0.085
+    x = np.array([-0.08,-0.07,-0.06,-0.05,-0.04,-0.03,-0.02,-0.01,0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08])
+
+
+    coupler_freq = np.sqrt(8 * 0.165 * 42 * abs(np.cos((x + 0.115) / 0.627 * np.pi))) - 0.165
+    print(  np.sqrt(8 * 0.165 * 42 * abs(np.cos((0.115) / 0.627 * np.pi))) - 0.165)
+    # coupler_freq = np.linspace( 5.5, 7.5, 7 )
+    coupling = 0.080
 
     detuning = coupler_freq -qubit_frequency
     opt_detuning = opt_coupler-qubit_frequency
@@ -75,11 +79,12 @@ if __name__ == '__main__':
     # ax.set_xlim(5.1, 6.5)
     output_dataarray = xr.Dataset(
         data_vars = dict(
-            r_g = (["frequency"],np.array(r_g_list)),
-            chi_error_list = (["frequency"],np.array(chi_error_list)),
+            r_g = (["flux"],np.array(r_g_list)),
+            chi_error_list = (["flux"],np.array(chi_error_list)),
+            frequency = (["flux"],qubit_frequency+detuning)
         ),
         coords=dict(
-            frequency = qubit_frequency+detuning,
+            flux = x,
         ),
         attrs=dict(
             opt_chi = opt_chi,

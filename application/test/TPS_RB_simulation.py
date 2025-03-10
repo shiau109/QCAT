@@ -414,7 +414,12 @@ class RandomizedBenchmarkingZZ(RandomizedBenchmarking):
             
             # Generate a random sequence of indices.
             indices = self.random_clifford_indices(sequence_length, n_cliffords)
-            # print(indices)
+            noisy_clifford_list = []
+            for i in range(24):
+                random_noise_gate_gen.detuning = self.gate_gen.detuning
+                random_noise_gate_gen.detuning += self.zz_effect()
+                noisy_clifford_list.append(random_noise_gate_gen.get_clifford_gate(i))
+            
             # Compute the overall ideal gate from the ideal Clifford list.
             overall_ideal = qt.qeye(2)
             for idx in indices:
@@ -427,12 +432,7 @@ class RandomizedBenchmarkingZZ(RandomizedBenchmarking):
             else:
                 state = init_state
             for idx in indices:
-                
-                random_noise_gate_gen.detuning = self.gate_gen.detuning
-                random_noise_gate_gen.detuning += self.zz_effect()
-                noisy_clifford = random_noise_gate_gen.get_clifford_gate(idx)
-
-                state = noisy_clifford * state * noisy_clifford.dag()
+                state = noisy_clifford_list[idx] * state * noisy_clifford_list[idx].dag()
                 if p_depol > 0:
                     state = apply_depolarization(state, p_depol)
                     

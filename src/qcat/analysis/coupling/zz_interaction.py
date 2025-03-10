@@ -34,7 +34,7 @@ class ZZInteraction( QCATAna ):
             fit_data = self.data.isel(coupler=i)
             fit_ramsey = FitDampedOscillation( fit_data.rename({"time": "x"}) )
             guess_para = fit_ramsey.guess()
-            params["Ec"].set(value=0.165, vary=False)
+            guess_para["Ec"].set(value=0.165, vary=False)
             init_phi = np.pi/2
             guess_para.add("phi",min=init_phi*0.9, max=init_phi*1.1)
             fit_ramsey.fit()
