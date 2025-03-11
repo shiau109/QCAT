@@ -58,7 +58,7 @@ class ZZinteractionEcho(QCATAna):
             coords=coords,
         )
 
-        self._plot_results()
+        # self._plot_results()
 
     def _plot_results(self):
         time = self.data.coords["time"].values

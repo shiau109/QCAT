@@ -7,10 +7,22 @@ from qcat.analysis.qubit.zz_interaction import ZZinteractionEcho
 
 # Instantiate the calculator with default values
 calc = ZZ_interaction()
+coupler_freq = np.linspace(5, 8, 100)
+calc.w2 = coupler_freq
+coupling = 0.085 *1.0 #*0.63
+corr_coupling = coupling*np.sqrt( (coupler_freq)/6.3 )
+calc.g23 = corr_coupling
+calc.g12 = corr_coupling
+calc.g13 = 0.0038 *1.071 *1.1 #*0.63
+
+print(coupler_freq)
 
 # Compute Nanjing's formulas and Tsinghua's formulas
 zz2_nanjing, zz3_nanjing, zz4_nanjing = calc.nanjing_formula()
 zz2_tsinghua, zz3_tsinghua, zz4_tsinghua = calc.tsinghua_formula()
+print(calc.d12,calc.d13)
+print(calc.g12)
+
 
 # Create a figure and axis for the ZZ interaction comparison plot
 fig1, ax1 = plt.subplots(figsize=(8, 5))
@@ -47,11 +59,16 @@ output_dataarray = xr.DataArray(
 )
 # print(data.coords["flux"].values)
 # Compute x values based on the flux coordinate.
-x = np.sqrt(8 * 0.165 * 42 * abs(np.cos((data.coords["flux"].values + 0.115) / 0.627 * np.pi))) - 0.165
+x = np.sqrt(8 * 0.16 *43 * abs(np.cos((data.coords["flux"].values +0.015 +0.10) /0.62 * np.pi))) - 0.16
 print(x[0],x[-1])
+print(data.coords["flux"].values[0],data.coords["flux"].values[-1])
 
 # Create a new figure and axis for the frequency vs x plot.
-ax1.plot(x, analysis.statistic_result["frequency"].values, label="data")
+ax1.plot(x, analysis.statistic_result["frequency"].values, marker='o', label="data")
 ax1.set_yscale("log")
-ax1.set_ylim(1e-2,10)
+ax1.set_ylim(1e-3,5)
+
+
+fig0, ax0 = plt.subplots(figsize=(8, 5))
+ax0.plot(data.coords["flux"].values, x)
 plt.show()

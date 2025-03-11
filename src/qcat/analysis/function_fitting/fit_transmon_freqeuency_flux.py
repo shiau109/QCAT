@@ -123,9 +123,9 @@ if __name__ == '__main__':
     # Create a DataArray for the three data points:
     # Points: (-0.175, 6.06), (0.145, 6.06), (0.21, 4.725)
     data = xr.DataArray(
-        data=np.array([6.06, 6.06, 4.725]),#5.8]),
+        data=np.array([6.06, 6.06, 4.730, 4.913]),#5.8]),
         dims=["x"],
-        coords={"x": np.array([-0.175, 0.145, 0.21])},#0.111])},
+        coords={"x": np.array([-0.170, 0.143, 0.208, 0.202])},#0.111])},
         name="transmon_freq",
         attrs={"description": "Three points for transmon frequency vs. flux"}
     )
@@ -133,8 +133,8 @@ if __name__ == '__main__':
     my_fit = FitTransmonFrequencyFlux(data)
     params = my_fit.guess()
     # Fix parameters to force the desired model:
-    params["Ec"].set(value=0.165, vary=False)
-    # params["period"].set(value=np.pi, vary=False)
+    params["Ec"].set(value=0.16, vary=False)
+    params["period"].set(value=0.8, vary=True)
     params["d"].set(value=0, vary=False)
     # params["offset"].set(value=-0.015, vary=False)  # symmetry axis from the two equal points
 

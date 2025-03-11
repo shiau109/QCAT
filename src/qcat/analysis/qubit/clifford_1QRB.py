@@ -42,12 +42,15 @@ class Clifford1QRB( QCATAna ):
         one_minus_p = 1 - fit_base.result.params["base"].value
         r_c = one_minus_p * (1 - 1 / 2**1)
         r_g = r_c / 1.875  # 1.875 is the average number of gates in clifford operation
-        # r_c_std = stdevs[1] * (1 - 1 / 2**1)
-        # r_g_std = r_c_std / 1.875
+        r_c_std = fit_base.result.params['base'].stderr * (1 - 1 / 2**1)
+        r_g_std = r_c_std / 1.875
         # Get the x-value of the minimum
         self.fidelity = {
-            "native_gate_fidelity": r_g,
-            "Clifford_gate_fidelity": r_c
+            "native_gate_infidelity": r_g,
+            "native_gate_infidelity_err": r_g_std,
+            "Clifford_gate_infidelity": r_c,
+            "fitting_base":fit_base.result.params["base"].value,
+            "fitting_base_stderr": fit_base.result.params['base'].stderr
         }
 
         # Plot

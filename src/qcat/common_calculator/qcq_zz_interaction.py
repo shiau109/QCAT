@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt
 
 class ZZ_interaction:
     def __init__(self, 
-                 w1=4.727, 
-                 w3=4.910, 
+                 w1=4.730, 
+                 w3=4.913, 
                  a1=-0.205, a2=-0.15, a3=-0.205, 
                  g12=0.080, g23=0.080, g13=0.0039,
-                 w2_range=(5.5, 7.25), 
-                 w2_points=100):
+                 w2=6.5
+                 ):
     # def __init__(self, 
     #              w1=3.63, 
     #              w3=3.757, 
@@ -20,16 +20,15 @@ class ZZ_interaction:
         Initialize the calculator with default parameter values and compute w2.
         """
         self.w1 = w1
+        self.w2 = w2
         self.w3 = w3
         self.a1 = a1
         self.a2 = a2
         self.a3 = a3
 
-        self.w2 = np.linspace(w2_range[0], w2_range[1], w2_points)
         self.g12 = g12
         self.g23 = g23
         self.g13 = g13
-        self._compute_differences()
         
     def _compute_differences(self):
         """
@@ -48,6 +47,8 @@ class ZZ_interaction:
                  + 1/(d12+d32-a2)*(1/d12+1/d32)**2)
         Returns a tuple: (zz2, zz3, zz4)
         """
+        self._compute_differences()
+
         zz2 = 2 * self.g13**2 * (1.0/(self.d13 - self.a3) - 1.0/(self.d13 + self.a1))
         zz3 = 2 * self.g13 * self.g12 * self.g23 * (
             2.0/(self.d13 - self.a3)/self.d12 - 2.0/(self.d13 + self.a1)/self.d32 
@@ -69,6 +70,8 @@ class ZZ_interaction:
                   + (g12**2*g23**2/d32**2)*(2/(-d13-a1)+1/d13-1/d12)
         Returns a tuple: (zz2, zz3, zz4)
         """
+        self._compute_differences()
+
         zz2 = 2 * self.g13**2 * (1.0/(self.d13 - self.a3) - 1.0/(self.d13 + self.a1))
         zz3 = 2 * self.g13 * self.g12 * self.g23 * (
             (2.0/(self.d13 - self.a3) - 1.0/self.d13)/self.d12 +
