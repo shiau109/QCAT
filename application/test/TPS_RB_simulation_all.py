@@ -120,7 +120,8 @@ if __name__ == '__main__':
         ),
         attrs=dict(
             opt_chi = opt_chi,
-            opt_coupler = opt_coupler
+            opt_coupler = opt_coupler,
+            opt_crosstalk_freq = opt_crosstalk_freq
         ),
     )
     print(output_dataarray)

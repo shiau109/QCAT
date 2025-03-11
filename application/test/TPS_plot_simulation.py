@@ -7,7 +7,8 @@ from qcat.analysis.qubit.clifford_1QRB import Clifford1QRB
 folder_list = ["independent","simultaneous"]
 fig, ax = plt.subplots(1)
 x = np.array([-0.08,-0.07,-0.06,-0.05,-0.04,-0.03,-0.02,-0.01,0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08])
-coupler_freq = np.sqrt(8 * 0.16 *44.8 * abs(np.cos((x +0.015 +0.11) /0.605 * np.pi))) - 0.16
+coupler_freq = np.sqrt(8 * 0.16 *43.73 * abs(np.cos((x +0.015 +0.10) /0.612 * np.pi))) - 0.16
+
 all_y = []
 ro_name = "q1_ro"
 for folder_name_str in folder_list:
