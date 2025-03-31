@@ -5,10 +5,10 @@ from numpy import ndarray, fft, linspace
 from numpy import cos, abs, exp, max, min, mean, argmax
 from numpy import pi
 
-from qcat.analysis.function_fitting import FunctionFitting
+from .function_fitting import FunctionFitting
 
 
-class FitCosine(FunctionFitting):
+class FitBasePowerLaw(FunctionFitting):
     """
     Input dataarray is 
     
@@ -16,6 +16,7 @@ class FitCosine(FunctionFitting):
     def __init__(self, data:DataArray=None):
 
         self._data_parser(data)
+
         self.model = Model(self.model_function)
         
     def _data_parser( self, data:DataArray ):
@@ -24,41 +25,31 @@ class FitCosine(FunctionFitting):
         self.y = data.values
         self.x = data.coords["x"].values
 
-    def model_function( self, x, a, f, phi, c ):
-        return a*cos(2*pi*f*x+phi)+c
-
+    def model_function( self, x, a, base, c ):
+        return a * (base**x) + c
+    
     def guess( self ):
-    # fft function made by Wei-En
-
+        x = self.x
         y = self.y
-        t = self.x
-        dt = t[1] - t[0]
-        max_val = max(y)
-        min_val = min(y)
-        # frequency guess
-        amp = fft.fft(y)[: len(y) // 2] #use positive frequency
-        freq = fft.fftfreq(len(y), dt)[: len(amp)]
-        amp[0] = 0  # Remove DC part 
-        power = abs(amp)
-        f_guess = abs(freq[argmax(power)])
-        f_guess_dict = dict(value=f_guess, min=-1/dt/2, max=1/dt/2 )
 
-        # phi_guess = 2 * pi - (2 * pi * t[y == max(y)] * f_guess)[0]
-        phi_guess_dict = dict(value=0, min=-pi, max=pi )
+        max_y = max(y)
+        min_y = min(y)
+        y_range = (max_y-min_y)
 
+        #base guess
+        base_guess_dict = dict(value=0.9, min=0, max=1)
+    
         #c guess
-        c_guess_dict = dict(value=mean(y), min=min_val, max=max_val)
-
+        c_guess_dict = dict(value=mean(y), min=min_y-y_range*2, max=max_y)
 
         #amp guess
-        a_guess = (max_val-min_val)/2
+        a_guess = y_range
         a_guess_dict = dict(value=a_guess, min=-a_guess*2, max=a_guess*2)
 
 
         params = self.model.make_params( 
                     a=a_guess_dict,  
-                    f=f_guess_dict,
-                    phi=phi_guess_dict,
+                    base=base_guess_dict,
                     c=c_guess_dict)
         self.params = params
 

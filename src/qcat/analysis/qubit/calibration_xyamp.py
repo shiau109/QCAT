@@ -1,5 +1,5 @@
 from qcat.analysis.base import QCATAna
-from qcat.analysis.common_fitting.fit_cosine import FitCosine
+from qcat.analysis.function_fitting.fit_cosine import FitCosine
 from qcat.visualization.qubit.plot_calibration_xy import PainterXYAmp
 from xarray import DataArray
 import numpy as np

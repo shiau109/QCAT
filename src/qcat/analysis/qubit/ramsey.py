@@ -1,44 +1,64 @@
+
 import numpy as np
 from lmfit import Model
 from lmfit.model import ModelResult
 
+from qcat.analysis.base import QCATAna
+from qcat.analysis.function_fitting.fit_damped_oscillation import FitDampedOscillation
+from xarray import DataArray
+from qcat.visualization.qubit.plot_ramsey import PainterT2Ramsey
+import numpy as np
 
-def exp_gaussian_cos(t, T1, amp, t_phi, detune, offset):
-    return amp * (np.exp(-t/(2*T1)) * np.exp(-t**2/t_phi**2) * np.cos(2 * np.pi * t * detune)) +offset
+class Ramsey( QCATAna ):
+    """
+    Input dataarray  
 
-def _qubit_ramsey_model():
-    # Create a model from the damped_oscillation function
-    model = Model(exp_gaussian_cos)
+    """
+    def __init__( self, data:DataArray ):
 
-    # Create a parameters object
-    params = model.make_params( amp=0.02, t_phi=10, detune=1, offset=0)
+        self._import_data(data)
 
-    return model, params
+    def _import_data( self, data ):
+        if not isinstance(data, DataArray):
+            raise ValueError("Input data must be an xarray.DataArray.")
+        
+        check_coords = ["time"]
+        for coord_name in check_coords:
+            if coord_name not in data.coords:
+                raise ValueError(f"No coord name called {coord_name} in the input array")
+        
+        self.data = data
+        self.data = self.data.assign_coords(time=self.data.coords["time"].values/1000.)
 
-def qubit_ramsey_fitting( time, T1, data )->ModelResult:
 
-    model, params = _qubit_ramsey_model()
-    params['amp'].set(guess_amp( data ), min=0, max=data[0]-max(data))
-    params['t_phi'].set(guess_t_phi(time,T1,data), min=0, max=time[-1])
-    params['detune'].set(guess_detune( time, data ), min=0)
-    params['offset'].set(guess_offset( data ), min=data[-1]-1.0, max=data[-1]+1.0)
-    
-    result = model.fit(data, params, t=time, T1=T1)
-    return result
+    def _start_analysis( self ):
+        fit_ramsey = FitDampedOscillation( self.data.rename({"time": "x"}) )
+        guess_para = fit_ramsey.guess()
+        init_phi = np.pi/2
+        guess_para.add("phi",min=init_phi*0.9, max=init_phi*1.1)
+        fit_ramsey.fit()
 
-def guess_amp( data ):
-    amp = (data[0]-data[-1])
-    return amp 
 
-def guess_t_phi(time, T1, data ): # Unfinish
-    return T1
+        # Plot
+        painter = PainterT2Ramsey( self.data, fit_ramsey.result )
+        self.fig = painter.plot()
 
-def guess_detune(time, data):
-    max_val_idx = np.argmax(data)
-    min_val_idx = np.argmin(data)
-    max_val_time = time[max_val_idx]
-    min_val_time = time[min_val_idx]
-    return 1 / np.abs(2*(max_val_time-min_val_time)) # Mhz
 
-def guess_offset( data ):
-    return data[-1]
+    def _export_result( self, *args, **kwargs ):
+        pass
+
+    # def run( self, save_path:str = None ):
+        
+    #     self.raw_data = self._import_data()
+
+    #     if self.raw_data is not None:
+    #         self.result = self._start_analysis()
+
+    #         if save_path is not None:
+    #             self.save_path = save_path
+    #             self._export_result()
+
+    #         return self.result
+
+    #     else:
+    #         print("Import data failed.")

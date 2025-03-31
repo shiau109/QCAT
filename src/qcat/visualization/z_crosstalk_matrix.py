@@ -50,7 +50,7 @@ pos_q = [10,12,14,16]
 q_name = ["q5", "q6", "q7", "q8"]
 # Create a 2D array with some NaN values
 
-plot_shift_crosstalk(np.abs(data),pos_q,q_name,ax,"red","20Q19C w/o airbridge")
+plot_shift_crosstalk(np.abs(data),pos_q,q_name,ax,"red","20Q19C w/o airbridge (20Q19C_1113ISB_2)")
 
 
 
@@ -62,7 +62,7 @@ data = np.array([
     ])
 pos_q = [4,6,8]
 q_name = [ "q2", "q3", "q4"]
-plot_shift_crosstalk(np.abs(data*100),pos_q,q_name,ax,"blue","5Q4C airbridge")
+plot_shift_crosstalk(np.abs(data*100),pos_q,q_name,ax,"blue","5Q4C airbridge(5Q4C_OS0516AB_9)")
 
 
 data = np.array([
@@ -74,7 +74,22 @@ data = np.array([
     ])
 pos_q = [0,1,2,3]
 q_name = [ "c2", "q3", "c3", "q4"]
-plot_shift_crosstalk(np.abs(data*100),pos_q,q_name,ax,"green","5Q4C Wire bonding")
+plot_shift_crosstalk(np.abs(data*100),pos_q,q_name,ax,"green","5Q4C Wire bonding(5Q4C_OS0430_7)")
+
+
+data = np.array([
+    # q0            q1             q2           q3              q4          q5              q6          q7          q8              q9
+    [-0.02,	    -0.12,	np.nan, 	0.164,	0.049,	0.035],
+    [-0.066,	-0.12,	np.nan, 	0.23,	0.049,	np.nan],
+    [-0.059,	-0.1,	np.nan, 	np.nan,	0.053,	0.041],
+    [-0.052,	np.nan,	np.nan, 	0.152,	0.043,	0.016],
+    [-0.057,	-0.091,	np.nan, 	0.059,	0.041,	0.029],
+
+    ])
+pos_q = [2, 2, 2, 2, 2]
+q_name = [ "q5", "q6", "q7", "q8", "q9"]
+plot_shift_crosstalk(np.abs(data*100),pos_q,q_name,ax,"orange","20Q19C(20Q19C_OS241213_4)")
+
 
 model_x_l = np.linspace(-20,-1,20)
 model_x_r = np.linspace(1,20,20)
@@ -86,6 +101,6 @@ ax.plot(model_x_r, nearest_crosstalk/model_x_r,"--",color="black", linewidth=2 )
 ax.set_yscale('log')
 
 ax.set_xlim(-20,15)
-ax.set_ylim(0.01,100)
+ax.set_ylim(0.1,50)
 ax.legend()
 plt.show()
