@@ -51,7 +51,7 @@ class GMMROFidelity( QCATAna ):
         training_DataArray = training_DataArray.transpose( "new_index", "mixer" )
         training_data = training_DataArray.values
  
-        self.cluster_trainer = GMMClusterTrainer()
+        self.cluster_trainer = GMMClusterTrainer(np.array(self.raw_data.coords["prepared_state"]).shape[0])
         self.cluster_trainer._import_data( training_data )
         self.cluster_trainer._start_analysis()
 
@@ -84,10 +84,12 @@ class GMMROFidelity( QCATAna ):
         return label_assign
     
     def export_G1DROFidelity( self ):
+
         data = self.raw_data.transpose("mixer","prepared_state",  "index").values
         centers_2d, centers1d, sigmas = self.discriminator._export_1D_paras()
+        
         train_data_proj = get_proj_distance(centers_2d.transpose(), data)
-        dataset_proj = xr.DataArray(train_data_proj, coords= [ ("prepared_state",[0,1]), ("index",np.arange(data.shape[2]))] )
+        dataset_proj = xr.DataArray(train_data_proj, coords= [ ("prepared_state",self.raw_data.coords["prepared_state"].values), ("index",np.arange(data.shape[2]))] )
 
         g1d_fidelity = G1DROFidelity()
         # Set parameter for G1DDiscriminator which from GMMROFidelity result
