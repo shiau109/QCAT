@@ -58,6 +58,7 @@ class GMMROFidelity( QCATAna ):
         trained_model = self.cluster_trainer._export_result()
         
         label_assign = self._create_state_label_mapping( trained_model )
+        
         self.label_map = GMMLabelMap( label_assign )
 
         self.discriminator = GMMDiscriminator( trained_model, self.label_map )
@@ -86,7 +87,7 @@ class GMMROFidelity( QCATAna ):
     def export_G1DROFidelity( self ):
 
         data = self.raw_data.transpose("mixer","prepared_state",  "index").values
-        centers_2d, centers1d, sigmas = self.discriminator._export_1D_paras()
+        centers_2d, centers1d, sigmas = self.discriminator._export_1D_paras(np.array(self.raw_data.coords['prepared_state']).shape[0])
         
         train_data_proj = get_proj_distance(centers_2d.transpose(), data)
         dataset_proj = xr.DataArray(train_data_proj, coords= [ ("prepared_state",self.raw_data.coords["prepared_state"].values), ("index",np.arange(data.shape[2]))] )
@@ -148,12 +149,14 @@ class G1DROFidelity( QCATAna ):
         self.g1d_dist = []
         for i in range(np.array(self.raw_data.coords['prepared_state']).shape[0]):
             self.g1d_dist.append( self._fit_distribution(self.raw_data[i]) )
+
                
-
+        
         self.state_data_array = self.discriminator._export_result()
-
-        self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=self.state_data_array, minlength=2)
+        
+        self.state_population = np.apply_along_axis(np.bincount, axis=-1, arr=self.state_data_array, minlength=3)
         self.state_probability = self.state_population/ self.state_data_array.shape[-1]
+
 
     def _export_result( self ):
         """ Export result with a format from analysis"""
