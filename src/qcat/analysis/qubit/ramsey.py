@@ -1,3 +1,8 @@
+
+import numpy as np
+from lmfit import Model
+from lmfit.model import ModelResult
+
 from qcat.analysis.base import QCATAna
 from qcat.analysis.function_fitting.fit_damped_oscillation import FitDampedOscillation
 from xarray import DataArray
@@ -57,7 +62,3 @@ class Ramsey( QCATAna ):
 
     #     else:
     #         print("Import data failed.")
-
-    
-
-    
