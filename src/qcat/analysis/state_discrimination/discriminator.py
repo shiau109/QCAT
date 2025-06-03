@@ -277,13 +277,13 @@ class GMMDiscriminator(QCATAna):
         """ Export result with a format from analysis"""
         return self.result
 
-    def _export_1D_paras( self ):
+    def _export_1D_paras( self, cluster_n:int=2):
 
 
         mapping_arr = self.label_map.label_assign.mapping_arr
-        sigma = [None]*2
-        centers_2d = [None]*2
-        for label_i in [0,1]:
+        sigma = [None]*cluster_n
+        centers_2d = [None]*cluster_n
+        for label_i in list(np.arange(cluster_n)):
             state_i = mapping_arr[label_i]
             sigma[state_i] = get_sigma(self.__cluster_model.covariances_[label_i])
             centers_2d[state_i] = self.__cluster_model.means_[label_i]
@@ -295,11 +295,15 @@ class GMMDiscriminator(QCATAna):
 
     def _export_G1DDiscriminator( self )->G1DDiscriminator:
         g1d_discriminator = G1DDiscriminator( self.label_map )
-        centers_2d, centers_1d, sigmas_1d = self._export_1D_paras()
-        g1d_discriminator.cluster_model.set_param_hint('g0_center',value=centers_1d[0], vary=False)
-        g1d_discriminator.cluster_model.set_param_hint('g1_center',value=centers_1d[1], vary=False)
-        g1d_discriminator.cluster_model.set_param_hint('g0_sigma',value=sigmas_1d[0], vary=False)
-        g1d_discriminator.cluster_model.set_param_hint('g1_sigma',value=sigmas_1d[1], vary=False)
+        
+        states = np.unique_values(self.label_map._export_result())
+        centers_2d, centers_1d, sigmas_1d = self._export_1D_paras(states.shape[0])
+        
+        for state in states:
+            g1d_discriminator.cluster_model.set_param_hint(f'g{state}_center',value=centers_1d[state], vary=False)
+            
+            g1d_discriminator.cluster_model.set_param_hint(f'g{state}_sigma',value=sigmas_1d[state], vary=False)
+            
         return g1d_discriminator
             
 

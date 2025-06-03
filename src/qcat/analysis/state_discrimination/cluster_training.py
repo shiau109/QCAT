@@ -8,9 +8,10 @@ from qcat.analysis.base import QCATAna
 
 class GMMClusterTrainer( QCATAna ):
 
-    def __init__( self ):
+    def __init__( self, pre_stats_num:int=2):
         super().__init__()
-        self.__model = GaussianMixture(n_components=2, random_state=0)
+        self.c_n = pre_stats_num
+        self.__model = GaussianMixture(n_components=pre_stats_num, random_state=0)
 
     @property
     def model( self )->GaussianMixture:
@@ -36,7 +37,7 @@ class GMMClusterTrainer( QCATAna ):
             self.__model.fit( self.raw_data )
         except:
             print(f"GaussianMixture fit fail")
-        self.__model.weights_ = [0.5,0.5]
+        self.__model.weights_ = [0.5]*self.c_n
 
         self.result = self.__model
         return self.result
@@ -146,11 +147,16 @@ from lmfit.models import GaussianModel
 
 class G1DClusterTrainer( QCATAna ):
 
-    def __init__( self ):
+    def __init__( self, prepared_state:list):
         super().__init__()
-        gm0 = GaussianModel(prefix="g0_", name="g0")
-        gm1 = GaussianModel(prefix="g1_", name="g1")
-        self.__model = gm0 + gm1
+        self._prepared_state = prepared_state
+        for idx, state in enumerate(prepared_state):
+            if idx == 0:
+                self.__model = GaussianModel(prefix=f"g{state}_", name=f"g{state}")
+            else:
+                self.__model += GaussianModel(prefix=f"g{state}_", name=f"g{state}")
+        # gm1 = GaussianModel(prefix="g1_", name="g1")
+        # self.__model = gm0 + gm1
 
         self.mu = None
         self.sigma = None
@@ -192,12 +198,18 @@ class G1DClusterTrainer( QCATAna ):
 
         hist, bin_edges = np.histogram(self.training_data.flatten(), bins, density=True)
 
-        self.__model.set_param_hint('g0_center',value=mu[0], vary=guess_vary)
-        self.__model.set_param_hint('g1_center',value=mu[1], vary=guess_vary)
-        self.__model.set_param_hint('g0_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
-        self.__model.set_param_hint('g1_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
-        self.__model.set_param_hint('g0_sigma',value=sigma[0], vary=guess_vary)
-        self.__model.set_param_hint('g1_sigma',value=sigma[1], vary=guess_vary)
+        for i in self._prepared_state:
+            self.__model.set_param_hint(f'g{i}_center',value=mu[i], vary=guess_vary)
+            self.__model.set_param_hint(f'g{i}_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
+            self.__model.set_param_hint(f'g{i}_sigma',value=sigma[i], vary=guess_vary)
+
+
+        # self.__model.set_param_hint('g0_center',value=mu[0], vary=guess_vary)
+        # self.__model.set_param_hint('g1_center',value=mu[1], vary=guess_vary)
+        # self.__model.set_param_hint('g0_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
+        # self.__model.set_param_hint('g1_amplitude',value=est_peak_h, min=0, max=est_peak_h*2, vary=True)
+        # self.__model.set_param_hint('g0_sigma',value=sigma[0], vary=guess_vary)
+        # self.__model.set_param_hint('g1_sigma',value=sigma[1], vary=guess_vary)
 
         params = self.__model.make_params()
         result = self.__model.fit(hist,params,x=bin_center)
