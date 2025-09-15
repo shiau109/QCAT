@@ -60,6 +60,7 @@ class ZZinteractionEcho():
     def _plot_results(self):
         from qcat.analysis.zz_interaction.visualization import plot_results
         return plot_results(self.data, self.statistic_result)
+    
     def _export_result(self, save_path=None):
         # Implement result export functionality if needed.
         pass
