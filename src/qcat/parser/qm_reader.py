@@ -54,7 +54,7 @@ def load_xarray_h5(file_path: str, engine_order: list[str] | None = None, load_i
         raise RuntimeError(f"Failed to open '{file_path}' as an xarray Dataset. Tried engines {engines}. Last error: {last_exc}") from exc
 
 def repetition_data( ds: xr.Dataset, repetition_dim: str = "qubit"):
-    n_qubits = ds.dims[repetition_dim]
+    n_qubits = ds.sizes[repetition_dim]
     output_data = []
     for qubit_idx in range(n_qubits):
         data = ds.isel(**{repetition_dim: qubit_idx})

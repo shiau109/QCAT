@@ -7,7 +7,7 @@ from lmfit import Model, Parameters
 
 def gaussian2D_function( x, y, amp, x0, y0, sigma_x, sigma_y):
     return amp * np.exp(
-        -(((x - x0) ** 2) / (2 * sigma_x ** 2) + ((y - y0) ** 2) / (2 * sigma_y ** 2))
+        -( ((x - x0) ** 2) / (2 * sigma_x ** 2) + ((y - y0) ** 2) / (2 * sigma_y ** 2) )
     )
 
 
@@ -39,15 +39,29 @@ class FitMultiGaussian2D(FunctionFitting):
         data_flat = self.data.ravel()
         # Use data as weights for clustering
         kmeans = KMeans(n_clusters=self.n_gauss, n_init=10)
-        kmeans.fit(coords, sample_weight=data_flat)
-        centers = kmeans.cluster_centers_
+        # To avoid NaN, mask out zero/negative density points
+        mask = data_flat > 0
+        if np.sum(mask) >= self.n_gauss:
+            kmeans.fit(coords[mask], sample_weight=data_flat[mask])
+            centers = kmeans.cluster_centers_
+        else:
+            # fallback: uniform grid
+            centers = np.column_stack([
+                np.linspace(self.x.min(), self.x.max(), self.n_gauss),
+                np.linspace(self.y.min(), self.y.max(), self.n_gauss)
+            ])
         for i in range(self.n_gauss):
+            # print(f"Gaussian {i} initial center: {centers[i]}")
             x0_guess, y0_guess = centers[i]
             params.add(f'g{i}_x0', value=x0_guess)
             params.add(f'g{i}_y0', value=y0_guess)
-            params.add(f'g{i}_sigma_x', value=(self.x.max()-self.x.min())/4, min=0)
-            params.add(f'g{i}_sigma_y', value=(self.y.max()-self.y.min())/4, min=0)
-            params.add(f'g{i}_amp', value=np.max(self.data)/self.n_gauss)
+            params.add(f'g{i}_sigma_x', value=(self.x.max()-self.x.min())/4, min=1e-6)
+            params.add(f'g{i}_sigma_y', value=(self.y.max()-self.y.min())/4, min=1e-6)
+            # Amplitude guess: max in region near center
+            ix = np.abs(self.x - x0_guess).argmin()
+            iy = np.abs(self.y - y0_guess).argmin()
+            amp_guess = self.data[iy, ix]
+            params.add(f'g{i}_amp', value=amp_guess, min=0, vary=True)
         params.add('offset', value=np.min(self.data))
         return params
     

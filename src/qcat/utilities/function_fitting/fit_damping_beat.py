@@ -53,13 +53,13 @@ class FitDampingBeat(FunctionFitting):
         phi_1_guess_dict = dict(value=0.0, min=-float(pi), max=float(pi))
         # kappa_1 guess: use 1/(t[-1]/2) as typical decay rate
         kappa_1_guess = 1.0 / abs(t[-1]/2) if abs(t[-1]/2) > 0 else 1.0
-        kappa_1_guess_dict = dict(value=kappa_1_guess, min=1e-6, max=10*kappa_1_guess)
+        kappa_1_guess_dict = dict(value=kappa_1_guess, min=0, max=10*kappa_1_guess)
         # If second frequency is not resolvable, fit single frequency only
         if f_2_idx is None:
             a_2_guess_dict = dict(value=0, vary=False)
             f_2_guess_dict = dict(value=0, vary=False)
             phi_2_guess_dict = dict(value=0, min=-float(pi), max=float(pi), vary=False)
-            kappa_2_guess_dict = dict(value=0, min=kappa_1_guess, max=kappa_1_guess, vary=False)
+            kappa_2_guess_dict = dict(value=0, min=0, max=kappa_1_guess, vary=False)
         else:
             f_2_guess = float(abs(freq[f_2_idx]))
             a_2_guess = float(abs(amp[f_2_idx]))
@@ -67,7 +67,7 @@ class FitDampingBeat(FunctionFitting):
             f_2_guess_dict = dict(value=f_2_guess, min=0.0, max=1.0/dt/2)
             phi_2_guess_dict = dict(value=0.0, min=-float(pi), max=float(pi))
             # kappa_2 guess: same as kappa_1
-            kappa_2_guess_dict = dict(value=kappa_1_guess, min=1e-6, max=10*kappa_1_guess)
+            kappa_2_guess_dict = dict(value=kappa_1_guess, min=0, max=10*kappa_1_guess)
         c_guess_dict = dict(value=float(mean(y)), min=min_val, max=max_val)
         self.params = self.model.make_params(
             a_1=a_1_guess_dict,
