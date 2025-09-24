@@ -263,7 +263,6 @@ class StateDiscrimination():
         # Concatenate all prepared_state densities for global fit
         trained_multi_2Dgaussian_params = self._train_by_multi_2Dgaussian()
 
-        print('2D multi-Gaussian training parameters:', trained_multi_2Dgaussian_params)
         # 2. Fit on each prepared_state using the density dataset
         fit_results = []
         x = self.hist_dataset['x'].values
@@ -319,7 +318,6 @@ class StateDiscrimination():
             'outlier_mask': outlier_mask.values,
             'outlier_probability': self.p_outlier,
         }
-        print('2D multi-Gaussian fit parameters (original units):', self.analysis_result)
 
     def _train_by_multi_2Dgaussian(self):
         """
@@ -358,7 +356,7 @@ class StateDiscrimination():
             means.append(np.array([x0, y0]))
             stds.append(np.array([sigma_x, sigma_y]))
             amps.append(amp)
-        print('Extracted amps:', amps)
+
         return {
             'means': np.array(means),
             'stds': np.array(stds),
@@ -402,7 +400,6 @@ class StateDiscrimination():
             fitter.params[f'g{i}_sigma_x'].set(value=std, vary=fix_std)
             fitter.params[f'g{i}_sigma_y'].set(expr=f'g{i}_sigma_x')
         fit_result = fitter.fit()
-        print(fit_result.fit_report())
         return fit_result, fitter
       
     def _export_result(self, save_path=None):

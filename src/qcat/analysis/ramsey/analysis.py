@@ -15,13 +15,13 @@ class RamseyAnalysis:
 
     
     def _fit(self):
-        fit_data = self.data["state"].rename({"idle_time": "x"}).squeeze()
+        fit_data = self.data["signal"].rename({"idle_time": "x"}).squeeze()
         self.fitter = FitDampingBeat(fit_data)
         self.fit_result = self.fitter.fit()
 
     def get_fft_data(self):
-        idle_times = self.data["state"].coords["idle_time"].values
-        y = self.data["state"].values
+        idle_times = self.data["signal"].coords["idle_time"].values
+        y = self.data["signal"].values
         n = len(idle_times)
         dt = idle_times[1] - idle_times[0] if n > 1 else 1.0
         amp = np.fft.fft(y)[:n // 2]
@@ -45,7 +45,7 @@ class RamseyAnalysis:
             analysis_result['kappa_2'] = analysis_result['kappa_2']*1e3 #GHz to MHz
             analysis_result['best_fit'] = self.fit_result.best_fit
         spec_fig = plot_fft(freq, amp)
-        time_fig = plot_results(self.data["state"], analysis_result)
+        time_fig = plot_results(self.data["signal"], analysis_result)
         return {"time_fig":time_fig, "spec_fig":spec_fig}
     
     def get_fit_data(self):
@@ -59,6 +59,7 @@ if __name__ == "__main__":
     from qcat.parser.qm_reader import load_xarray_h5, repetition_data
     import matplotlib.pyplot as plt
     ds = load_xarray_h5(r"d:\github\ASQMDriver\data\MIST\2025-09-15\#641_LCH_Ramsey_222721\ds_raw.h5")
+    ds = ds.rename({"state": "signal"})
     print(ds)
     sep_data = repetition_data(ds, repetition_dim="qubit")
     for sq_data in sep_data:
