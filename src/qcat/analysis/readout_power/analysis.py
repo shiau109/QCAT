@@ -6,18 +6,20 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec as GS
 from qcat.parser.qm_reader import load_xarray_h5, repetition_data
 
-class PowerMIST():
+class ROFidelityPower():
     """
     Class for analyzing exponential decay data with the flux coordinate.
     This is adapted from the repetition analysis code but replaces "repetition" with "flux".
     """
 
-    def __init__(self, data: xr.Dataset):
+    def __init__(self, data: xr.Dataset, user_mean=None, user_std=None):
         super().__init__()
         self._import_data(data)
-        self.weight = 'p_outlier'
+        self.weight = 'cov'  # 'none', 'cov', 'p_outlier', 'mix'
+        self.user_mean = user_mean
+        self.user_std = user_std
     def _import_data(self, data):
-        # Ensure input data is an xarray Dataset and has 'time' and 'flux' coordinates.
+        # Ensure input data is an xarray Dataset and has required coordinates.
         if not isinstance(data, xr.Dataset):
             raise ValueError("Input data must be an xarray.Dataset.")
 
@@ -26,67 +28,75 @@ class PowerMIST():
                 raise ValueError(f"No {coords_name} coordinate in the input Dataset.")
 
         self.data = data
-        # Convert time coordinate units if needed (here, dividing by 1000 to convert ms to us)
 
     def _start_analysis(self):
         """
-        Separate the data into a list of subdata along amp_prefactor coordinate.
+        Separate the data into a list of subdata along sweep_coord coordinate.
         For each subdata, use StateDiscrimination to do the analysis.
         Store the results in self.state_discrimination_results (list).
         Also gather std_list and mean_list for summary plotting.
         """
         from qcat.analysis.state_discrimination.analysis import StateDiscrimination
         self.state_discrimination_results = []
-        amp_prefactors = self.data.coords['amp_prefactor'].values
+        sweep_values = self.data.coords["amp_prefactor"].values
+        self.sweep_values = sweep_values
         p_outlier_list = []
         std_list = []
         mean_list = []
-
-        for amp in amp_prefactors:
-            subdata = self.data.sel(amp_prefactor=amp)
+        norm_res_list = []
+        for val in sweep_values:
+            subdata = self.data.sel({"amp_prefactor": val})
             # If subdata is DataArray, convert to Dataset with I and Q if needed
             if isinstance(subdata, xr.DataArray):
                 # Assume subdata has variables 'I' and 'Q' or is already suitable
                 if 'I' in subdata or 'Q' in subdata:
                     subdata = subdata.to_dataset()
-            analysis = StateDiscrimination(subdata)
+            # Pass user_mean and user_std if set
+            kwargs = {}
+            if self.user_mean is not None:
+                kwargs['user_mean'] = self.user_mean
+            if self.user_std is not None:
+                kwargs['user_std'] = self.user_std
+            analysis = StateDiscrimination(subdata, **kwargs)
             analysis._start_analysis()
             self.state_discrimination_results.append(analysis)
-            # Gather std (sqrt(covariances)) and means for each amp_prefactor
+            # Gather std (sqrt(covariances)) and means for each sweep value
             result = analysis.analysis_result
             trained_paras = result["trained_paras"]
-            std_list.append(trained_paras["stds"][0])
-            mean_list.append(trained_paras["means"])
+            std_list.append(trained_paras["std"])
+            mean_list.append(trained_paras["mean"])
             p_outlier_list.append(result["outlier_probability"])
-  
+            norm_res_list.append(result['norm_res'])
         self.p_outlier = np.array(p_outlier_list)
         self.std_list = np.array(std_list)
         self.mean_list = np.array(mean_list)
-        print( self.p_outlier.shape, self.std_list.shape, self.mean_list.shape)
-        # Build a summary xarray.Dataset for all amp_prefactor
-        amp_dim = np.array(amp_prefactors)
+        # Build a summary xarray.Dataset for all sweep values
+        sweep_dim = np.array(sweep_values)
 
         self.summary_dataset = xr.Dataset(
             {
-                'p_outlier': (['amp_prefactor', 'state'], np.array(p_outlier_list)),
-                'std': (['amp_prefactor', 'state'], np.array(std_list)),
-                'mean': (['amp_prefactor', 'state', 'iq'], np.array(mean_list)),
+                'p_outlier': (["amp_prefactor", 'state'], np.array(p_outlier_list)),
+                'std': (["amp_prefactor"], np.array(std_list)),
+                'mean': (["amp_prefactor", 'state', 'iq'], np.array(mean_list)),
+                'norm_res': (["amp_prefactor", 'state'], np.array(norm_res_list))
             },
             coords={
-                'amp_prefactor': amp_dim,
+                "amp_prefactor": sweep_dim,
                 'state': [0, 1],
                 'iq': ['I', 'Q'],
             }
         )
         print(self.summary_dataset)
         self.fit_paras, fit_curve = self.fit_means_vs_amp_prefactor()
-        print(self.fit_paras)
-    def _plot_results(self, fig_group_name=None, save_path=None ):
-        from qcat.analysis.power_dep_state.visualization import (
-            plot_p_outlier_vs_amp_prefactor,
+
+    def _plot_results(self, fig_group_name=None, save_path=None, plot_all=False ):
+        from qcat.analysis.readout_power.visualization import (
             plot_std_vs_amp_prefactor,
             plot_means_distance_vs_amp_prefactor,
-            plot_means_on_IQ_plane_vs_amp_prefactor
+            plot_means_on_IQ_plane_vs_amp_prefactor,
+            plot_gaussian_norms_and_direct_counts_vs_amp_prefactor,
+            plot_norm_res_vs_amp_prefactor,
+            plot_p_outlier_vs_amp_prefactor
         )
 
         figs = {}
@@ -94,10 +104,18 @@ class PowerMIST():
         figs["std_vs_amp"] = plot_std_vs_amp_prefactor(self.summary_dataset['std'])
         figs["means_distance_vs_amp"] = plot_means_distance_vs_amp_prefactor(self.summary_dataset['mean'])
         figs["means_on_IQ_plane"] = plot_means_on_IQ_plane_vs_amp_prefactor(self.summary_dataset, self.fit_paras)
+        figs["norm_res_vs_amp"] = plot_norm_res_vs_amp_prefactor(self.summary_dataset["norm_res"])
+        # Gather gaussian_norms and direct_counts from each analysis_result
+        gaussian_norms = np.array([res.analysis_result['gaussian_norms'] for res in self.state_discrimination_results])
+        direct_counts = np.array([res.analysis_result['direct_counts'] for res in self.state_discrimination_results])
+        figs["fidelity_vs_amp"] = plot_gaussian_norms_and_direct_counts_vs_amp_prefactor(
+            self.data.coords['amp_prefactor'].values, gaussian_norms, direct_counts
+        )
 
-        # for i in range(sub_analysis_len):
-        #     analysis = self.state_discrimination_results[i]
-        #     analysis._plot_results(fig_group_name=f"{fig_group_name}_{amp_prefactors[i]}", save_path=save_path)
+        if plot_all:
+            for i in range(len(self.state_discrimination_results)):
+                analysis = self.state_discrimination_results[i]
+                analysis._plot_results(fig_group_name=f"{fig_group_name}_{self.sweep_values[i]}", save_path=save_path)
         if save_path is not None:
             for plot_name, fig in figs.items():
                 fig.savefig(f"{save_path}\\{fig_group_name}_{plot_name}.png", bbox_inches='tight')
@@ -135,10 +153,10 @@ class PowerMIST():
                     weights[mask] = 1.0 / p_outlier[:, state]**2
                 case 'cov':
                     weights = np.zeros_like(y)
-                    weights[mask] = 1.0 / stds[:, state]**2
+                    weights[mask] = 1.0 / stds**2
                 case 'mix':
                     weights = np.zeros_like(y)
-                    weights[mask] = 1.0 / (stds[:, state]**2 *p_outlier[:, state])
+                    weights[mask] = 1.0 / (stds**2 *p_outlier[:, state]**2)
                 case _:
                     weights = None
 
@@ -152,7 +170,7 @@ class PowerMIST():
                     result = model.fit(y[mask], x=amp_prefactor_values[mask])
                 slopes[state, iq] = result.params['slope'].value
                 intercepts[state, iq] = result.params['intercept'].value
-                # Calculate fitted curve at all amp_prefactor_values
+                # Calculate fitted curve at all sweep_values
                 mean_fit[:, state, iq] = result.eval(x=amp_prefactor_values)
             else:
                 result = None
@@ -188,9 +206,8 @@ class PowerMIST():
 
 if __name__ == '__main__':
     # Open the netCDF dataset with your data.
-    from qcat.utilities.simple_visualization import plot_2d_colormap_from_h5
     import matplotlib.pyplot as plt
-    path_name = r"D:\github\ASQMDriver\data\MIST\2025-09-23\#774_LCH_readout_power_010128"
+    path_name = r"D:\data\MIST\charge_ramsey_power_fidelity\41_500_1\#1436_LCH_const_charge_readout_power_28_010738"
     ds = load_xarray_h5(path_name+"\\ds_raw.h5")
     sep_data = repetition_data(ds, repetition_dim="qubit")
 
@@ -201,9 +218,9 @@ if __name__ == '__main__':
         # Rename n_runs to shot_idx if present
         # sq_data = sq_data.rename({'n_runs': 'shot_idx','state': 'prepared_state'})
         print(sq_data)
-        analysis = PowerMIST(sq_data)
+        analysis = ROFidelityPower(sq_data)
         analysis._start_analysis()
-        analysis._plot_results(qubit_name, path_name)
+        analysis._plot_results(qubit_name, path_name, plot_all=True)
         
 
     # plt.show()

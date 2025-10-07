@@ -20,7 +20,7 @@ def parse_timestamp(ts):
     return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
 
 
-base_dir = r'D:\data\MIST\repeat_ramsey\all\connect'
+base_dir = r'D:\data\MIST\repeat_ramsey\with_connect'
 dataset_list = []
 
 for root, dirs, files in os.walk(base_dir):
@@ -31,6 +31,7 @@ for root, dirs, files in os.walk(base_dir):
             ds = load_xarray_h5(file_path)
             with open(json_path, 'r') as f:
                 json_dict = json.load(f)
+            ds = ds.rename({'state': 'signal'})
             dataset_list.append((ds, json_dict))
             print(f"Loaded: {file_path}, loaded node.json")
         except Exception as e:
@@ -40,6 +41,7 @@ print(f"Total datasets loaded: {len(dataset_list)}")
 
 # Get all start times
 start_times = [parse_timestamp(json_dict["metadata"]["run_start"]) for _, json_dict in dataset_list]
+print(start_times)
 t0 = start_times[0]
 relative_times = [(t - t0).total_seconds() for t in start_times]
 

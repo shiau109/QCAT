@@ -1,4 +1,5 @@
 
+
 import os
 from qcat.parser.qm_reader import load_xarray_h5, repetition_data
 import json
@@ -20,10 +21,13 @@ def parse_timestamp(ts):
     return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
 
 
-base_dir = r'd:\data\MIST\charge_gate_ramsey\20att_1p9M_5_2000_4'
+base_dir = r'D:\data\MIST\charge_ramsey_power_fidelity\41_500_1'
 dataset_list = []
 
 for root, dirs, files in os.walk(base_dir):
+    # Only process subfolders with the pattern 'LCH_const_charge_gate_ramsey' in their path
+    if 'LCH_const_charge_gate_ramsey' not in root:
+        continue
     if 'ds_raw.h5' in files and 'node.json' in files:
         file_path = os.path.join(root, 'ds_raw.h5')
         json_path = os.path.join(root, 'node.json')
@@ -43,23 +47,38 @@ start_times = [parse_timestamp(json_dict["metadata"]["run_start"]) for _, json_d
 t0 = start_times[0]
 relative_times = [(t - t0).total_seconds() for t in start_times]
 
-# Assume all datasets have the same qubit coordinates
-qubit_names = dataset_list[0][0].coords['qubit'].values
-num_qubits = len(qubit_names)
 
-# For each qubit, collect the corresponding data from all datasets
-qubit_data_list = [[] for _ in range(num_qubits)]
-json_list = [[] for _ in range(num_qubits)]
+ds_list = []
+charge_volt_list = []
 for ds, json_dict in dataset_list:
-    ds = ds.rename({"state": "signal"})
-    for i, qubit_name in enumerate(qubit_names):
-        # Extract the data for this qubit
-        sq_data = ds.sel(qubit=qubit_name)
-        qubit_data_list[i].append(sq_data)
-        json_list[i].append(json_dict)
+    if "state" in list(ds.data_vars):
+        ds = ds.rename({"state": "signal"})
+    else:
+        ds = ds.rename({"I": "signal"})
 
-# Now, for each qubit, analyze and plot
-for i, qubit_name in enumerate(qubit_names):
+    # Build a list of charge_volt values
+    charge_volt_list.append(json_dict["data"]["parameters"]["model"]["charge_gate_in_v"])
+    ds_list.append(ds)
+
+# Concatenate along a new 'charge_volt' coordinate
+merged_ds = xr.concat(ds_list, dim=xr.DataArray(charge_volt_list, dims="charge_volt", name="charge_volt"))
+
+# Save merged_ds to an HDF5 file
+merged_ds_save_path = os.path.join(base_dir, "charge_gate_ramsey.h5")
+try:
+    merged_ds.to_netcdf(merged_ds_save_path)
+    print(f"Merged dataset saved to {merged_ds_save_path}")
+except Exception as e:
+    print(f"Failed to save merged dataset: {e}")
+
+    
+
+# Use repetition_data to get per-qubit data from merged_ds
+from qcat.parser.qm_reader import repetition_data
+qubit_datasets = repetition_data(merged_ds, repetition_dim="qubit")
+
+for sq_data in qubit_datasets:
+    qubit_name = sq_data["qubit"].values.item()
     spectra = []
     f1_list = []
     f2_list = []
@@ -68,20 +87,17 @@ for i, qubit_name in enumerate(qubit_names):
     kappa_1_list = []
     kappa_2_list = []
     times = []
-    charge_volt_list = []
+    charge_volt_list = sq_data.coords["charge_volt"].values
     rawdata_matrix = []
-    idle_time_axis = None
-    for sq_data, json_dict in zip(qubit_data_list[i], json_list[i]):
-        analysis = RamseyAnalysis(sq_data)
+    idle_time_axis = sq_data["idle_time"].values
+    for idx, charge_volt in enumerate(charge_volt_list):
+        single_ds = sq_data.sel(charge_volt=charge_volt)
+        analysis = RamseyAnalysis(single_ds)
         freq, amp = analysis.get_fft_data()
         spectra.append(np.abs(amp))
         fit_result = analysis.fit_result
-        # Save raw data for 2D colormap
-        
-        yvals = sq_data["signal"].values
+        yvals = single_ds["signal"].values
         rawdata_matrix.append(yvals)
-        if idle_time_axis is None:
-            idle_time_axis = sq_data["idle_time"].values
         if fit_result is not None:
             a_1_list.append(fit_result.params.get('a_1', np.nan))
             a_2_list.append(fit_result.params.get('a_2', np.nan))
@@ -91,7 +107,6 @@ for i, qubit_name in enumerate(qubit_names):
             kappa_2_list.append(kappa_2.value if kappa_2 is not None else np.nan)
             f1 = fit_result.params.get('f_1', None)
             f2 = fit_result.params.get('f_2', None)
-
             f1_list.append(f1.value if f1 is not None else np.nan)
             if fit_result.params.get('a_2', None) == 0:
                 f2_list.append(np.nan)
@@ -102,12 +117,8 @@ for i, qubit_name in enumerate(qubit_names):
             f2_list.append(np.nan)
             kappa_1_list.append(np.nan)
             kappa_2_list.append(np.nan)
-
-        # Get relative time
-        run_start = parse_timestamp(json_dict["metadata"]["run_start"])
-        times.append((run_start - t0).total_seconds())
-        charge_volt = json_dict["data"]["parameters"]["model"]["charge_gate_in_v"]
-        charge_volt_list.append(charge_volt)
+        # times can be filled if you have a time coord per charge_volt
+        # times.append(single_ds.coords["time"].item())
     # Plot raw data as 2D colormap: x=idle_time, y=charge_volt_list
     rawdata_matrix = np.array(rawdata_matrix)
     fig_raw, ax_raw = plt.subplots(figsize=(10, 6))
@@ -171,4 +182,4 @@ for i, qubit_name in enumerate(qubit_names):
     ax3.legend()
     fig3.tight_layout()
     fig3.savefig(os.path.join(base_dir, f'kappa_vs_charge_{qubit_name}.png'))
-plt.show()
+# plt.show()

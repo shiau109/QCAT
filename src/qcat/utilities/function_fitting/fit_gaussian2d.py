@@ -69,6 +69,7 @@ class FitMultiGaussian2D(FunctionFitting):
         pass
 
     def fit(self):
+
         result = self.model.fit(
             self.data.ravel(),
             x=np.tile(self.x, len(self.y)),

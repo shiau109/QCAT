@@ -1,3 +1,66 @@
+def plot_norm_res_vs_amp_prefactor(norm_res_da):
+	"""
+	Plot normalized fit residue (norm_res) vs amp_prefactor for each state.
+	Args:
+		norm_res_da: xarray.DataArray with dims ('amp_prefactor', 'state') or similar
+	Returns:
+		fig: matplotlib Figure
+	"""
+	import matplotlib.pyplot as plt
+	amp_prefactor_values = norm_res_da['amp_prefactor'].values
+	fig, ax = plt.subplots(figsize=(6, 4), dpi=150)
+	if 'state' in norm_res_da.dims:
+		state_dim = norm_res_da['state'].values if hasattr(norm_res_da['state'], 'values') else norm_res_da['state']
+		colors = ['tab:blue', 'tab:red', 'tab:orange', 'tab:green', 'tab:purple', 'tab:brown']
+		for idx, state in enumerate(state_dim):
+			norm_res_values = norm_res_da.sel(state=state).values
+			color = colors[idx % len(colors)]
+			ax.plot(amp_prefactor_values, norm_res_values, marker='o', linestyle='-', color=color, label=f'state {state}')
+		ax.legend()
+	else:
+		norm_res_values = norm_res_da.values
+		ax.plot(amp_prefactor_values, norm_res_values, marker='o', linestyle='-', color='tab:blue')
+	ax.set_xlabel('amp_prefactor')
+	ax.set_ylabel('Normalized fit residue (norm_res)')
+	ax.set_title('Normalized Fit Residue vs amp_prefactor')
+	ax.grid(True, linestyle='--', alpha=0.5)
+	fig.tight_layout()
+	return fig
+def plot_gaussian_norms_and_direct_counts_vs_amp_prefactor(amp_prefactors, gaussian_norms, direct_counts):
+	"""
+	Plot gaussian_norms and direct_counts as a function of amp_prefactors.
+	Args:
+		amp_prefactors: 1D array-like of amp_prefactor values
+		gaussian_norms: 2D array-like, shape (n_amp, n_state)
+		direct_counts: 2D array-like, shape (n_amp, n_state)
+	Returns:
+		fig: matplotlib Figure
+	"""
+	import matplotlib.pyplot as plt
+	amp_prefactors = np.asarray(amp_prefactors)
+	gaussian_norms = np.asarray(gaussian_norms)
+	direct_counts = np.asarray(direct_counts)
+	n_state = gaussian_norms.shape[1]
+	fig, axes = plt.subplots(1, 2, figsize=(12, 5), dpi=150)
+	colors = ['tab:blue', 'tab:red', 'tab:orange', 'tab:green']
+	# Plot gaussian_norms
+	for state in range(n_state):
+		axes[0].plot(amp_prefactors, gaussian_norms[:, state], marker='o', linestyle='-', color=colors[state % len(colors)], label=f'state {state}')
+	axes[0].set_xlabel('amp_prefactor')
+	axes[0].set_ylabel('gaussian_norms')
+	axes[0].set_title('Gaussian Norms vs amp_prefactor')
+	axes[0].legend()
+	axes[0].grid(True, linestyle='--', alpha=0.5)
+	# Plot direct_counts
+	for state in range(n_state):
+		axes[1].plot(amp_prefactors, direct_counts[:, state], marker='o', linestyle='-', color=colors[state % len(colors)], label=f'state {state}')
+	axes[1].set_xlabel('amp_prefactor')
+	axes[1].set_ylabel('direct_counts')
+	axes[1].set_title('Direct Counts vs amp_prefactor')
+	axes[1].legend()
+	axes[1].grid(True, linestyle='--', alpha=0.5)
+	fig.tight_layout()
+	return fig
 
 def plot_std_vs_amp_prefactor(std_da):
 	"""
@@ -7,17 +70,11 @@ def plot_std_vs_amp_prefactor(std_da):
 	"""
 	amp_prefactor_values = std_da['amp_prefactor'].values
 	fig, ax = plt.subplots(figsize=(6, 4), dpi=150)
-	if 'state' in std_da.dims:
-		state_dim = std_da['state'].values if hasattr(std_da['state'], 'values') else std_da['state']
-		colors = ['tab:blue', 'tab:red', 'tab:orange', 'tab:green', 'tab:purple', 'tab:brown']
-		for idx, state in enumerate(state_dim):
-			std_values = std_da.sel(state=state).values
-			color = colors[idx % len(colors)]
-			ax.plot(amp_prefactor_values, std_values, marker='o', linestyle='-', color=color, label=f'state {state}')
-		ax.legend()
-	else:
-		std_values = std_da.values
-		ax.plot(amp_prefactor_values, std_values, marker='o', linestyle='-', color='tab:orange')
+
+
+	std_values = std_da.values
+	ax.plot(amp_prefactor_values, std_values, marker='o', linestyle='-', color='tab:orange')
+
 	ax.set_xlabel('amp_prefactor')
 	ax.set_ylabel('std (sqrt(covariances))')
 	ax.set_title('Std vs amp_prefactor')
@@ -63,7 +120,7 @@ def plot_means_on_IQ_plane_vs_amp_prefactor(summary_dataset, fit_paras=None):
 	for i, amp in enumerate(amp_prefactor_values):
 		for state, color, marker in [(0, 'blue', 'x'), (1, 'red', 'x')]:
 			mean = means_values[i, state, :]
-			std = std_values[i, state]
+			std = std_values[i]
 			p_outlier = p_outlier_values[i, state]
 			alpha = max(0.1, 1 - p_outlier * 10)  # Scale p_outlier to [0,1] for alpha
 			# Draw circle with std as radius, p_outlier as alpha
