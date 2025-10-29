@@ -48,7 +48,7 @@ class StateDiscrimination():
         self.data = data
 
 
-    def _preprocess_data(self, bins=50):
+    def _preprocess_data(self, bins=20):
         # Compute mean and std for initialization (in original units)
         mean_I = self.data['I'].mean(dim='shot_idx').values
         mean_Q = self.data['Q'].mean(dim='shot_idx').values
@@ -73,7 +73,7 @@ class StateDiscrimination():
 
         # Use std/5 as step for bins, prefer user_std if set
         std_val = self.user_std if self.user_std is not None else self.std_init
-        step = std_val / 5.0
+        step = std_val / 5
         # Ensure step is positive and not too small
         if step <= 0:
             step = 1e-3

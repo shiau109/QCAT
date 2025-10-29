@@ -38,14 +38,16 @@ class RamseyAnalysis:
         freq = freq*1e6 #GHz to kHz
         # Convert fit_result.params to a simple dictionary
         analysis_result = {k: v.value for k, v in self.fit_result.params.items()} if self.fit_result is not None else None
+        plot_info = analysis_result 
         if analysis_result is not None:
-            analysis_result['f_1'] = analysis_result['f_1']*1e6 #GHz to kHz
-            analysis_result['f_2'] = analysis_result['f_2']*1e6 #GHz to kHz
-            analysis_result['kappa_1'] = analysis_result['kappa_1']*1e3 #GHz to MHz
-            analysis_result['kappa_2'] = analysis_result['kappa_2']*1e3 #GHz to MHz
-            analysis_result['best_fit'] = self.fit_result.best_fit
+            plot_info['f_1'] = analysis_result['f_1']*1e6 #GHz to kHz
+            plot_info['kappa_1'] = analysis_result['kappa_1']*1e3 #GHz to MHz
+            plot_info['f_2'] = analysis_result['f_2']*1e6 #GHz to kHz
+            plot_info['kappa_2'] = analysis_result['kappa_2']*1e3 #GHz to MHz
+            
+            plot_info['best_fit'] = self.fit_result.best_fit
         spec_fig = plot_fft(freq, amp)
-        time_fig = plot_results(self.data["signal"], analysis_result)
+        time_fig = plot_results(self.data["signal"], plot_info)
         return {"time_fig":time_fig, "spec_fig":spec_fig}
     
     def get_fit_data(self):

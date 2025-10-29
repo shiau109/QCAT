@@ -21,7 +21,7 @@ def parse_timestamp(ts):
     return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
 
 
-base_dir = r'D:\data\MIST\charge_ramsey_power_fidelity\41_500_1'
+base_dir = r'D:\data\MIST\charge_gate_ramsey\SC_RF_20251026\RT_DCblock'
 dataset_list = []
 
 for root, dirs, files in os.walk(base_dir):

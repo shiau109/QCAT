@@ -50,6 +50,7 @@ def plot_outliers(data, outlier_mask, analysis_result=None):
                 )
                         
     fig.tight_layout()
+    plt.close(fig)
     return fig, axes
 
 def plot_prepared_state_scatter(data, analysis_result=None):
@@ -122,6 +123,7 @@ def plot_prepared_state_scatter(data, analysis_result=None):
                 )
 
     fig.tight_layout()
+    plt.close(fig)
     return fig, axes
 
 def plot_2d_histogram(hist_dataset, analysis_result=None):
@@ -192,6 +194,7 @@ def plot_2d_histogram(hist_dataset, analysis_result=None):
                 )
 
     plt.tight_layout()
+    plt.close(fig)
     return fig, axes
     
 
@@ -318,4 +321,5 @@ def plot_2d_fit_residue(fit_residues, norm_res):
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.7)
         )
     plt.tight_layout()
+    plt.close(fig)
     return fig, axes

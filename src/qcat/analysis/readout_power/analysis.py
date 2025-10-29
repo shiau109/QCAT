@@ -12,12 +12,13 @@ class ROFidelityPower():
     This is adapted from the repetition analysis code but replaces "repetition" with "flux".
     """
 
-    def __init__(self, data: xr.Dataset, user_mean=None, user_std=None):
+    def __init__(self, data: xr.Dataset, user_std=None, fit_mean=None):
         super().__init__()
         self._import_data(data)
         self.weight = 'cov'  # 'none', 'cov', 'p_outlier', 'mix'
-        self.user_mean = user_mean
         self.user_std = user_std
+        self.fit_mean = fit_mean
+
     def _import_data(self, data):
         # Ensure input data is an xarray Dataset and has required coordinates.
         if not isinstance(data, xr.Dataset):
@@ -29,7 +30,7 @@ class ROFidelityPower():
 
         self.data = data
 
-    def _start_analysis(self):
+    def _start_analysis(self, save_path=None):
         """
         Separate the data into a list of subdata along sweep_coord coordinate.
         For each subdata, use StateDiscrimination to do the analysis.
@@ -44,17 +45,23 @@ class ROFidelityPower():
         std_list = []
         mean_list = []
         norm_res_list = []
-        for val in sweep_values:
+        for idx, val in enumerate(sweep_values):
             subdata = self.data.sel({"amp_prefactor": val})
             # If subdata is DataArray, convert to Dataset with I and Q if needed
             if isinstance(subdata, xr.DataArray):
                 # Assume subdata has variables 'I' and 'Q' or is already suitable
                 if 'I' in subdata or 'Q' in subdata:
                     subdata = subdata.to_dataset()
-            # Pass user_mean and user_std if set
             kwargs = {}
-            if self.user_mean is not None:
-                kwargs['user_mean'] = self.user_mean
+            # If self.fit_mean is not None, use its value to set user_mean for this amp_prefactor
+            if self.fit_mean is not None:
+                # self.fit_mean['intercept'] is shape (2,2) for (state, iq), slope is (2,2)
+                # user_mean should be shape (2,2): user_mean[state, iq] = slope * val + intercept
+                slope = self.fit_mean['slope'].values  # shape (2,2)
+                intercept = self.fit_mean['intercept'].values  # shape (2,2)
+                user_mean = slope * val + intercept
+                kwargs['user_mean'] = user_mean
+
             if self.user_std is not None:
                 kwargs['user_std'] = self.user_std
             analysis = StateDiscrimination(subdata, **kwargs)
@@ -86,8 +93,25 @@ class ROFidelityPower():
                 'iq': ['I', 'Q'],
             }
         )
-        print(self.summary_dataset)
-        self.fit_paras, fit_curve = self.fit_means_vs_amp_prefactor()
+        if self.fit_mean is None:
+            self.fit_mean, fit_curve = self.fit_means_vs_amp_prefactor()
+        else:
+            fit_curve = None
+
+        # Optionally save summary_dataset and fit_mean if save_path is given
+        if save_path is not None:
+            summary_path = save_path + "\\summary_dataset.nc"
+            fit_paras_path = save_path + "\\fit_mean.nc"
+            try:
+                self.summary_dataset.to_netcdf(summary_path)
+                print(f"Saved summary_dataset to {summary_path}")
+            except Exception as e:
+                print(f"Failed to save summary_dataset: {e}")
+            try:
+                self.fit_mean.to_netcdf(fit_paras_path)
+                print(f"Saved fit_mean to {fit_paras_path}")
+            except Exception as e:
+                print(f"Failed to save fit_mean: {e}")
 
     def _plot_results(self, fig_group_name=None, save_path=None, plot_all=False ):
         from qcat.analysis.readout_power.visualization import (
@@ -96,14 +120,16 @@ class ROFidelityPower():
             plot_means_on_IQ_plane_vs_amp_prefactor,
             plot_gaussian_norms_and_direct_counts_vs_amp_prefactor,
             plot_norm_res_vs_amp_prefactor,
-            plot_p_outlier_vs_amp_prefactor
+            plot_p_outlier_vs_amp_prefactor,
+            plot_means_vs_amp_prefactor
         )
 
         figs = {}
         figs["outlier"] = plot_p_outlier_vs_amp_prefactor(self.summary_dataset['p_outlier'])
         figs["std_vs_amp"] = plot_std_vs_amp_prefactor(self.summary_dataset['std'])
         figs["means_distance_vs_amp"] = plot_means_distance_vs_amp_prefactor(self.summary_dataset['mean'])
-        figs["means_on_IQ_plane"] = plot_means_on_IQ_plane_vs_amp_prefactor(self.summary_dataset, self.fit_paras)
+        figs["means_on_IQ_plane"] = plot_means_on_IQ_plane_vs_amp_prefactor(self.summary_dataset, self.fit_mean)
+        figs["means_vs_amp"] = plot_means_vs_amp_prefactor(self.summary_dataset['mean'], self.fit_mean)
         figs["norm_res_vs_amp"] = plot_norm_res_vs_amp_prefactor(self.summary_dataset["norm_res"])
         # Gather gaussian_norms and direct_counts from each analysis_result
         gaussian_norms = np.array([res.analysis_result['gaussian_norms'] for res in self.state_discrimination_results])
@@ -176,7 +202,7 @@ class ROFidelityPower():
                 result = None
             fit_results[labels[idx]] = result
         # Build xarray.Dataset for fit parameters
-        fit_paras = xr.Dataset(
+        fit_mean = xr.Dataset(
             {
                 'slope': (['state', 'iq'], slopes),
                 'intercept': (['state', 'iq'], intercepts),
@@ -197,7 +223,7 @@ class ROFidelityPower():
                 'iq': ds['iq'].values,
             }
         )
-        return fit_paras, fit_curve_dataset
+        return fit_mean, fit_curve_dataset
     
     def _export_result(self, save_path=None):
         # Implement result export functionality if needed.
@@ -207,10 +233,9 @@ class ROFidelityPower():
 if __name__ == '__main__':
     # Open the netCDF dataset with your data.
     import matplotlib.pyplot as plt
-    path_name = r"D:\data\MIST\charge_ramsey_power_fidelity\41_500_1\#1436_LCH_const_charge_readout_power_28_010738"
+    path_name = r"D:\data\MIST\charge_ramsey_power_fidelity\41_500_1\#1404_LCH_const_charge_readout_power_12_010323"
     ds = load_xarray_h5(path_name+"\\ds_raw.h5")
     sep_data = repetition_data(ds, repetition_dim="qubit")
-
 
 
     for sq_data in sep_data:
@@ -218,9 +243,10 @@ if __name__ == '__main__':
         # Rename n_runs to shot_idx if present
         # sq_data = sq_data.rename({'n_runs': 'shot_idx','state': 'prepared_state'})
         print(sq_data)
-        analysis = ROFidelityPower(sq_data)
-        analysis._start_analysis()
-        analysis._plot_results(qubit_name, path_name, plot_all=True)
-        
+        if qubit_name == 'q1':
+            analysis = ROFidelityPower(sq_data, user_std =None) #0.000235
+            # analysis.fit_mean = load_xarray_h5(r"d:\data\MIST\charge_ramsey_power_fidelity\41_500_1\#1420_LCH_const_charge_readout_power_20_010529\free_std2p5\fit_mean.nc")
+            analysis._start_analysis(save_path=path_name)
+            analysis._plot_results(qubit_name, path_name, plot_all=True)
 
     # plt.show()

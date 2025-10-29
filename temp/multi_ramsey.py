@@ -20,10 +20,13 @@ def parse_timestamp(ts):
     return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
 
 
-base_dir = r'D:\data\MIST\repeat_ramsey\with_connect'
+base_dir = r'D:\data\brian'
 dataset_list = []
 
 for root, dirs, files in os.walk(base_dir):
+    # Only process subfolders with the pattern 'LCH_const_charge_readout_power' in their path
+    if 'LCH_Ramsey' not in root:
+        continue
     if 'ds_raw.h5' in files and 'node.json' in files:
         file_path = os.path.join(root, 'ds_raw.h5')
         json_path = os.path.join(root, 'node.json')

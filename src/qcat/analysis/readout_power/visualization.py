@@ -44,18 +44,25 @@ def plot_gaussian_norms_and_direct_counts_vs_amp_prefactor(amp_prefactors, gauss
 	fig, axes = plt.subplots(1, 2, figsize=(12, 5), dpi=150)
 	colors = ['tab:blue', 'tab:red', 'tab:orange', 'tab:green']
 	# Plot gaussian_norms
-	for state in range(n_state):
-		axes[0].plot(amp_prefactors, gaussian_norms[:, state], marker='o', linestyle='-', color=colors[state % len(colors)], label=f'state {state}')
+	# for state in range(n_state):
+	axes[0].plot(amp_prefactors, gaussian_norms[:, 0, 1], marker='o', linestyle='-', color=colors[0], label=f'prepare 0, measure 1')
+	axes[0].plot(amp_prefactors, gaussian_norms[:, 1, 0], marker='o', linestyle='-', color=colors[1], label=f'prepare 1, measure 0')
+
 	axes[0].set_xlabel('amp_prefactor')
 	axes[0].set_ylabel('gaussian_norms')
+	# Use log scale for better dynamic range
+	axes[0].set_yscale('log')
 	axes[0].set_title('Gaussian Norms vs amp_prefactor')
 	axes[0].legend()
 	axes[0].grid(True, linestyle='--', alpha=0.5)
 	# Plot direct_counts
-	for state in range(n_state):
-		axes[1].plot(amp_prefactors, direct_counts[:, state], marker='o', linestyle='-', color=colors[state % len(colors)], label=f'state {state}')
+	# for state in range(n_state):
+	axes[1].plot(amp_prefactors, direct_counts[:, 0, 1], marker='o', linestyle='-', color=colors[0], label=f'prepare 0, measure 1')
+	axes[1].plot(amp_prefactors, direct_counts[:, 1, 0], marker='o', linestyle='-', color=colors[1], label=f'prepare 1, measure 0')
 	axes[1].set_xlabel('amp_prefactor')
 	axes[1].set_ylabel('direct_counts')
+	# Use log scale for direct counts as well
+	axes[1].set_yscale('log')
 	axes[1].set_title('Direct Counts vs amp_prefactor')
 	axes[1].legend()
 	axes[1].grid(True, linestyle='--', alpha=0.5)
@@ -188,3 +195,52 @@ def plot_p_outlier_vs_amp_prefactor(p_outlier_da):
 	fig.tight_layout()
 	return fig
 
+def plot_means_vs_amp_prefactor(mean_da, fit_paras=None):
+	"""
+	Plot the mean of I and Q for both states as a function of amp_prefactor.
+	Optionally plot the fitted lines if fit_paras is provided.
+	Args:
+		mean_da: xarray.DataArray with dims ('amp_prefactor', 'state', 'iq')
+		fit_paras: xarray.Dataset with variables 'slope' and 'intercept' (dims: state, iq), optional
+	Returns:
+		fig: matplotlib Figure
+	"""
+	import matplotlib.pyplot as plt
+	import numpy as np
+	amp_prefactor_values = mean_da['amp_prefactor'].values
+	means = mean_da.values  # shape (N, 2, 2)
+	fig, ax = plt.subplots(figsize=(7, 5), dpi=150)
+	# State 0: red, State 1: blue; I: circle, Q: triangle; fit: dashed
+	state_colors = {0: 'red', 1: 'blue'}
+	markers = {0: 'o', 1: '^'}  # I: circle, Q: triangle
+	labels = ['I, state 0', 'I, state 1', 'Q, state 0', 'Q, state 1']
+	for idx, (iq, state) in enumerate([(0,0), (0,1), (1,0), (1,1)]):
+		y = means[:, state, iq]
+		color = state_colors[state]
+		marker = markers[iq]
+		# Data points: solid marker
+		ax.plot(amp_prefactor_values, y, color=color, linestyle='None', marker=marker, markersize=8, label=labels[idx])
+		# Optionally plot fit curve and annotate slope/intercept
+		if fit_paras is not None:
+			slope = fit_paras['slope'].sel(state=state, iq=['I','Q'][iq]).item()
+			intercept = fit_paras['intercept'].sel(state=state, iq=['I','Q'][iq]).item()
+			# Extend fit x to include 0 if not present
+			fit_x = amp_prefactor_values
+			if 0 not in fit_x:
+				fit_x = np.insert(fit_x, 0, 0)
+			fit_x = np.sort(fit_x)
+			fit_y = slope * fit_x + intercept
+			# Fit: dashed line, same color
+			ax.plot(fit_x, fit_y, color=color, linestyle='--', linewidth=2)
+			# Annotate slope and intercept
+			textstr = f"{labels[idx]}\nslope={slope:.4g}\nintercept={intercept:.4g}"
+			yloc = 0.97 - 0.1*idx
+			ax.text(1.02, yloc, textstr, transform=ax.transAxes, fontsize=9, color=color,
+					verticalalignment='top', horizontalalignment='left', bbox=dict(boxstyle='round', facecolor='white', alpha=0.6, edgecolor=color))
+	ax.set_xlabel('amp_prefactor')
+	ax.set_ylabel('Mean Value')
+	ax.set_title('Means of I and Q vs amp_prefactor (states 0 and 1)')
+	ax.legend()
+	ax.grid(True, linestyle='--', alpha=0.5)
+	fig.tight_layout()
+	return fig
