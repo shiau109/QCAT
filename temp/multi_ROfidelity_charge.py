@@ -1,6 +1,6 @@
 
 import os
-from qcat.parser.qm_reader import load_xarray_h5, repetition_data
+from qcat.parser.qm_reader import load_xarray_h5, repetition_data, parse_timestamp
 import json
 from lmfit import Model
 import numpy as np
@@ -12,12 +12,6 @@ import matplotlib.pyplot as plt
 from qcat.analysis.state_discrimination.analysis import StateDiscrimination
 
 import datetime
-
-def parse_timestamp(ts):
-    # Remove timezone info for parsing
-    if '+' in ts:
-        ts = ts.split('+')[0]
-    return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
 
 
 base_dir = r'D:\data\MIST\charge_ramset_fidelity'

@@ -62,6 +62,14 @@ def repetition_data( ds: xr.Dataset, repetition_dim: str = "qubit"):
     return output_data
 
 
+import datetime
+
+def parse_timestamp(ts):
+    # Remove timezone info for parsing
+    if '+' in ts:
+        ts = ts.split('+')[0]
+    return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
+
 # def to_NCU_Measurement_Master(ds: xr.Dataset, repetition_dim: str = "qubit"):
 #     from types import SimpleNamespace
 #     from qcat.NCU.Measurement_Master import Measurement_Save

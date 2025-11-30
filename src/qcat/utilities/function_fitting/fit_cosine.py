@@ -45,7 +45,7 @@ class FitCosine(FunctionFitting):
         f_guess_dict = dict(value=f_guess, min=-1/dt/2, max=1/dt/2 )
 
         # phi_guess = 2 * pi - (2 * pi * t[y == max(y)] * f_guess)[0]
-        phi_guess_dict = dict(value=0, min=-pi, max=pi )
+        phi_guess_dict = dict(value=pi, min=-pi*1.1, max=pi*1.1 )
 
         #c guess
         c_guess_dict = dict(value=mean(y), min=min_val, max=max_val)
@@ -53,7 +53,7 @@ class FitCosine(FunctionFitting):
 
         #amp guess
         a_guess = (max_val-min_val)/2
-        a_guess_dict = dict(value=a_guess, min=-a_guess*2, max=a_guess*2)
+        a_guess_dict = dict(value=a_guess, min=0, max=a_guess*2)
 
 
         params = self.model.make_params( 

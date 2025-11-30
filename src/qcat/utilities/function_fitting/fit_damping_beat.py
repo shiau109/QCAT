@@ -43,7 +43,7 @@ class FitDampingBeat(FunctionFitting):
         # Find second peak index with sufficient separation
         f_2_idx = None
         for idx in peak_indices[1:5]:
-            if abs(idx - f_1_idx) >= 2 and power[idx]/power[f_1_idx]>0.25:
+            if abs(idx - f_1_idx) >= 3 and power[idx]/power[f_1_idx]>0.5:
                 f_2_idx = idx
                 break
         f_1_guess = float(abs(freq[f_1_idx]))

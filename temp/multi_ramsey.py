@@ -1,8 +1,8 @@
 
 import os
-from qcat.parser.qm_reader import load_xarray_h5, repetition_data
+from qcat.parser.qm_reader import load_xarray_h5, repetition_data, parse_timestamp
 import json
-from lmfit import Model
+# from lmfit import Model
 import numpy as np
 
 
@@ -13,14 +13,9 @@ from qcat.analysis.ramsey.analysis import RamseyAnalysis
 
 import datetime
 
-def parse_timestamp(ts):
-    # Remove timezone info for parsing
-    if '+' in ts:
-        ts = ts.split('+')[0]
-    return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
 
 
-base_dir = r'D:\data\brian'
+base_dir = r'D:\data\MIST\20251124\LCH_graph_ramsey_repeat'
 dataset_list = []
 
 for root, dirs, files in os.walk(base_dir):

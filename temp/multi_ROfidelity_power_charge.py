@@ -5,13 +5,8 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 from qcat.analysis.readout_power.analysis import ROFidelityPower
-import datetime
 
-def parse_timestamp(ts):
-    # Remove timezone info for parsing
-    if '+' in ts:
-        ts = ts.split('+')[0]
-    return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
+
 
 base_dir = r'D:\data\MIST\charge_ramsey_power_fidelity\41_500_1'
 assign_std = None #0.000235
