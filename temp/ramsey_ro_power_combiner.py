@@ -643,7 +643,7 @@ def find_charge_gate_indices(readout_data, ds_ramsey):
     print(f"\nFound charge_gate indices for {len(charge_gate_indices)} experiments")
     return charge_gate_indices
 
-def extract_readout_data_at_phase(readout_data, ds_ramsey, charge_gate_window=108):
+def extract_readout_data_at_phase(readout_data, ds_ramsey, charge_gate_window):
     """
     Extract 2D readout data (I, Q) starting from charge_gate positions closest to abscos_phase values.
     Extracts a window of charge_gate_window points in the forward direction, or backward if out of bounds.
@@ -681,7 +681,8 @@ def extract_readout_data_at_phase(readout_data, ds_ramsey, charge_gate_window=10
     
     extracted_data = {}
     charge_gate_indices = find_charge_gate_indices(readout_data, ds_ramsey)
-    print(f"\nExtracting 2D readout data with {charge_gate_window}-point charge_gate windows...")
+    charge_gate_window_pts = int(charge_gate_window[0] / charge_gate_window[1])
+    print(f"\nExtracting 2D readout data with {charge_gate_window_pts}-point charge_gate windows...")
     
     for exp_idx, dataset in readout_data.items():
         if exp_idx not in charge_gate_indices:
@@ -696,15 +697,15 @@ def extract_readout_data_at_phase(readout_data, ds_ramsey, charge_gate_window=10
             total_charge_gates = len(dataset.coords['charge_gate'])
             
             # Determine the slice direction and range
-            if charge_gate_idx_center + charge_gate_window <= total_charge_gates:
+            if charge_gate_idx_center + charge_gate_window_pts <= total_charge_gates:
                 # Forward direction: from center to center+window
                 start_idx = charge_gate_idx_center
-                end_idx = charge_gate_idx_center + charge_gate_window
+                end_idx = charge_gate_idx_center + charge_gate_window_pts
                 direction = "forward"
                 charge_gate_slice = slice(start_idx, end_idx)
             else:
                 # Backward direction: from center-window to center
-                start_idx = max(0, charge_gate_idx_center - charge_gate_window)
+                start_idx = max(0, charge_gate_idx_center - charge_gate_window_pts)
                 end_idx = charge_gate_idx_center
                 direction = "backward"
                 charge_gate_slice = slice(start_idx, end_idx)
@@ -753,7 +754,7 @@ def extract_readout_data_at_phase(readout_data, ds_ramsey, charge_gate_window=10
         'extracted_count': len(extracted_data),
         'failed_count': len(readout_data) - len(extracted_data),
         'charge_gate_indices': charge_gate_indices,
-        'window_size': charge_gate_window,
+        'window_size': charge_gate_window_pts,
         'direction_counts': {
             'forward': forward_count,
             'backward': backward_count
@@ -769,7 +770,7 @@ def extract_readout_data_at_phase(readout_data, ds_ramsey, charge_gate_window=10
     print(f"   Total experiments: {summary['total_experiments']}")
     print(f"   Successfully extracted: {summary['extracted_count']}")
     print(f"   Failed: {summary['failed_count']}")
-    print(f"   Window size: {charge_gate_window}")
+    print(f"   Window size: {charge_gate_window_pts}")
     print(f"   Forward direction: {forward_count}")
     print(f"   Backward direction: {backward_count}")
     
@@ -795,7 +796,7 @@ def concatenate_extracted_readout_data(extracted_results):
             'metadata': {
                 'experiment_indices': list,
                 'total_shots': int,
-                'charge_gate_window': int,
+                'charge_gate_window_pts': int,
                 'amp_prefactor_mode': str,
                 'shape': tuple
             }
@@ -920,7 +921,7 @@ def concatenate_extracted_readout_data(extracted_results):
     
     # Calculate metadata
     total_shots = len(i_final.shot_idx)
-    charge_gate_window = len(i_final.charge_gate)
+    charge_gate_window_pts = len(i_final.charge_gate)
     
     result = {
         'I_concatenated': i_final,
@@ -929,7 +930,7 @@ def concatenate_extracted_readout_data(extracted_results):
             'experiment_indices': experiment_indices,
             'total_experiments': len(experiment_indices),
             'total_shots': total_shots,
-            'charge_gate_window': charge_gate_window,
+            'charge_gate_window_pts': charge_gate_window_pts,
             'amp_prefactor_mode': extracted_results['summary']['amp_prefactor_mode'],
             'original_shot_count_per_exp': i_data.shape[-1],
             'final_shape': i_final.shape
@@ -939,7 +940,7 @@ def concatenate_extracted_readout_data(extracted_results):
     print(f"\n✅ Concatenation Complete:")
     print(f"   Experiments combined: {len(experiment_indices)}")
     print(f"   Total shots: {total_shots}")
-    print(f"   Charge gate window: {charge_gate_window}")
+    print(f"   Charge gate window: {charge_gate_window_pts}")
     print(f"   Final I shape: {i_final.shape}")
     print(f"   Final Q shape: {q_final.shape}")
     print(f"   Coordinates: {list(i_final.coords.keys())}")
@@ -1003,7 +1004,7 @@ def create_concatenated_dataset(concatenated_results):
         'description': 'Concatenated readout data from stable Ramsey experiments',
         'total_experiments': metadata['total_experiments'],
         'total_shots': metadata['total_shots'],
-        'charge_gate_window': metadata['charge_gate_window'],
+        'charge_gate_window_pts': metadata['charge_gate_window_pts'],
         'amp_prefactor_mode': metadata['amp_prefactor_mode'],
         'experiment_indices': str(metadata['experiment_indices'])
     })
@@ -1237,7 +1238,7 @@ def plot_iq_colormaps_advanced(dataset, amp_prefactor_slice=None, charge_gate_sl
     # Overall title with metadata
     metadata = dataset.attrs
     title = (f'Stable Ramsey Experiments: {metadata.get("total_experiments", "N")} exp, '
-             f'{metadata.get("charge_gate_window", "N")} charge gates, '
+             f'{metadata.get("charge_gate_window_pts", "N")} charge gates, '
              f'{metadata.get("total_shots", "N")} shots')
     fig.suptitle(title, fontsize=14)
     
@@ -1270,8 +1271,7 @@ if __name__ == "__main__":
         print("Extracting readout data at phase positions...")
         gate_period=0.463
         gate_step=0.005
-        charge_gate_window = int(gate_period / gate_step)
-        extracted_results = extract_readout_data_at_phase(results['readout_data'], results['ramsey_dataset'], charge_gate_window=charge_gate_window)
+        extracted_results = extract_readout_data_at_phase(results['readout_data'], results['ramsey_dataset'], charge_gate_window=(gate_period,gate_step))
         
         # Concatenate extracted data
         print("\n" + "-"*40)
