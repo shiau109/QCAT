@@ -77,7 +77,7 @@ def analyze_ramsey_folders(root_folder):
                 # Perform analysis
                 analysis = ChargeGateRamseyAnalysis(sqdata)
                 analysis.all_ave_freq = 0.25e-3  # Set average frequency as requested
-                analysis.fixed_frequency = 0.54 # Set fixed frequency for abscos fitting
+                analysis.fixed_frequency = None # Set fixed frequency for abscos fitting
                 analysis._start_analysis()
                 
                 # Extract fit results
@@ -373,26 +373,16 @@ def plot_2d_frequency_map(results_df, output_folder):
     phase_min, phase_max = phases.min(), phases.max()
     charge_min, charge_max = charge_range[0], charge_range[1]
     charge_span = charge_max - charge_min
-    
-    # Map phases to charge gate positions (normalized then scaled)
-    if phase_max != phase_min:
-        normalized_phases = (phases - phase_min) / (phase_max - phase_min)
-        mapped_phases = charge_min + normalized_phases * charge_span * 0.8 + charge_span * 0.1  # Use 80% of range with 10% margins
-    else:
-        mapped_phases = np.full_like(phases, (charge_min + charge_max) / 2)
+
     
     # Plot horizontal lines and markers for each folder index
-    for i, (mapped_phase, original_phase, color) in enumerate(zip(mapped_phases, phases, colors)):
-        # Draw horizontal line spanning a portion of the charge gate range centered on mapped phase
-        line_span = charge_span * 0.05  # 5% of charge range
-        ax.plot([mapped_phase - line_span/2, mapped_phase + line_span/2], [i, i], 
-                color=color, linewidth=4, alpha=0.9, zorder=10)
+    for i, ( original_phase, color) in enumerate(zip( phases, colors)):
         # Add marker at the mapped phase position
-        ax.scatter(mapped_phase, i, c=color, s=80, alpha=1.0, 
+        ax.scatter(original_phase, i, c=color, s=80, alpha=1.0, 
                   edgecolors='black', linewidth=2, marker='o', zorder=11)
     
     # Connect phase points with a line
-    ax.plot(mapped_phases, indices, 'white', alpha=0.8, linewidth=2, zorder=9, 
+    ax.plot(phases, indices, 'white', alpha=0.8, linewidth=2, zorder=9, 
             linestyle='--', label='Phase trend')
     
     # Add colorbar for frequency data

@@ -68,10 +68,14 @@ class ChargeGateRamseyAnalysis:
         
         # Initial parameter guesses
         guess_freq = 0.55 if self.fixed_frequency is None else self.fixed_frequency
+        guess_period = 1/guess_freq
         freq_range = np.max(merged_freqs) - np.min(merged_freqs)
         charge_range = np.max(merged_charge_gates) - np.min(merged_charge_gates)
-        guess_offset = merged_charge_gates[min_freq_index] + guess_freq/2
-        
+        guess_offset = merged_charge_gates[min_freq_index] -guess_period/4
+        if guess_offset>guess_period/4:
+            guess_offset -= guess_period/2
+        if guess_offset<-guess_period/4:
+            guess_offset += guess_period/2
         # Set initial parameters
         params = model.make_params(
             amplitude=freq_range,
@@ -88,7 +92,7 @@ class ChargeGateRamseyAnalysis:
         else:
             params['frequency'].set(min=0.8*guess_freq, max=1.2*guess_freq)  # Allow variation
             
-        params['phase'].set(min=guess_offset-charge_range/5, max=guess_offset+charge_range/5)
+        params['phase'].set(min=guess_offset-guess_period/5, max=guess_offset+guess_period/5)
         try:
             # Perform the fit
             self.abscos_fit_result = model.fit(merged_freqs, params, x=merged_charge_gates)

@@ -9,7 +9,7 @@ from qcat.analysis.readout_power.analysis import ROFidelityPower
 
 
 # Folder to check
-folder_path = r"d:\github\ASQMDriver\data\MIST\2025-11-28\#2686_LCH_charge_gate_readout_power_11_164900"
+folder_path = r"d:\data\MIST\20251124\LCH_graph_charge_gate_r_rp\prepare_0\#2684_LCH_charge_gate_readout_power_10_164804"
 
 # Build paths
 file_path = os.path.join(folder_path, 'ds_raw.h5')
