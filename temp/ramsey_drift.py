@@ -77,7 +77,7 @@ def analyze_ramsey_folders(root_folder):
                 # Perform analysis
                 analysis = ChargeGateRamseyAnalysis(sqdata)
                 analysis.all_ave_freq = 0.25e-3  # Set average frequency as requested
-                analysis.fixed_frequency = None # Set fixed frequency for abscos fitting
+                analysis.fixed_frequency = 0.54 # Set fixed frequency for abscos fitting
                 analysis._start_analysis()
                 
                 # Extract fit results
@@ -97,12 +97,12 @@ def analyze_ramsey_folders(root_folder):
                 
                 results.append(result_entry)
                 
-                print(f"    Fit success: {fit_success}")
-                if fit_success:
-                    print(f"    Phase: {result_entry['abscos_phase']:.4f}")
-                    print(f"    Amplitude: {result_entry['abscos_amplitude']:.6f}")
-                    print(f"    Frequency: {result_entry['abscos_frequency']:.4f}")
-                    print(f"    Reduced χ²: {result_entry['abscos_redchi']:.4f}")
+                # print(f"    Fit success: {fit_success}")
+                # if fit_success:
+                #     print(f"    Phase: {result_entry['abscos_phase']:.4f}")
+                #     print(f"    Amplitude: {result_entry['abscos_amplitude']:.6f}")
+                #     print(f"    Frequency: {result_entry['abscos_frequency']:.4f}")
+                #     print(f"    Reduced χ²: {result_entry['abscos_redchi']:.4f}")
                 
         except Exception as e:
             print(f"Error analyzing {folder_name}: {str(e)}")
@@ -429,7 +429,7 @@ def plot_2d_frequency_map(results_df, output_folder):
 
 if __name__ == "__main__":
     # Set the root folder path
-    root_folder = r"D:\data\MIST\20251124\LCH_graph_charge_gate_r_rp\prepare_0"
+    root_folder = r"D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5"
     
     # Analyze all folders
     print("Starting Ramsey analysis for all subfolders...")

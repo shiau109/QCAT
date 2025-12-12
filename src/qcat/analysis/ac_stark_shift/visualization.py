@@ -6,11 +6,15 @@ import matplotlib.pyplot as plt
 
 def Ac_Stark_shift_fit_plot(results:dict,given_factors:dict,target_average_photon_number:float,ro_output_att:float): 
     from qcat.common_calculator.analytical import n_predict    
-    Nor_f=1e9
+    Nor_f=1e6
     y_fit= results.data_vars['fitting']/Nor_f
     y= results.data_vars['data']/Nor_f
-    x= results.coords['P']*1000   #unit:mW
-    x_fit= results.coords['para_fit']*1000  #unit:mW
+    # x= results.coords['P']*1000   #unit:mW
+    x= np.sqrt(results.coords['P']*50)   #unit:mW
+
+    # x_fit= results.coords['para_fit']*1000  #unit:mW
+    x_fit= np.sqrt(results.coords['para_fit']*50)  #unit:mW
+
     fa=results.attrs['fa_0']/Nor_f
     coeff=results.attrs['coeff']
 
@@ -35,7 +39,7 @@ def Ac_Stark_shift_fit_plot(results:dict,given_factors:dict,target_average_photo
 
     fig, ax = plt.subplots(nrows =1,figsize =(6,4),dpi =200)
     x_label= "Readout output voltage"+" [V]"
-    y_label= r"$f_{01}$"+' [GHz]'
+    y_label= r"$f_{01}$"+' [MHz]'
 
     # text_msg = "Fit results\n"
     # text_msg += r"$f_{01}= %.4f $"%(fa) +' GHz\n\n'
@@ -91,8 +95,8 @@ def Ac_stark_shift_plot(Raw_data,Process_data,Analysis_result,fit_info,plot_info
     fit_window_data_index= fit_info['fit_window_data_index']
     given_factors= fit_info['given_factors']
     fig1= Fit_analysis_plot(Analysis_result['data_fit'][linecut],P_rescale=plot_info['P_rescale'],Dis=plot_info['Dis'])
-    fig2= plot_2D(Process_data['first_samples']/1e9,Process_data['second_samples']**2,Process_data['data'][0],
-                    label=[r"$f_{XY}\ $[GHz]",'Stark amp'+' [V]'],
+    fig2= plot_2D(Process_data['first_samples']/1e6,Process_data['second_samples']**2,Process_data['data'][0],
+                    label=[r"$f_{XY}\ $[MHz]",'Stark power'+' [V^2]'],
                     title="Ac_Stark_shift",
                     readout_qubit_info= plot_info['readout_qubit_info'],
                     P_rescale    = plot_info['P_rescale'], Dis = plot_info['Dis'],

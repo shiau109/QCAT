@@ -17,6 +17,8 @@ class ChargeGateRamseyAnalysis:
         # self._fft()
         self.all_ave_freq = None
         self.fixed_frequency = None
+        self.abscos_fit_result_dict = None
+        
     def _start_analysis(self):
         self._get_frequency()
         self._fit_abscos()
@@ -92,21 +94,22 @@ class ChargeGateRamseyAnalysis:
         else:
             params['frequency'].set(min=0.8*guess_freq, max=1.2*guess_freq)  # Allow variation
             
-        params['phase'].set(min=guess_offset-guess_period/5, max=guess_offset+guess_period/5)
+        params['phase'].set(min=guess_offset-guess_period/10, max=guess_offset+guess_period/10)
         try:
             # Perform the fit
             self.abscos_fit_result = model.fit(merged_freqs, params, x=merged_charge_gates)
             
             # Store fit parameters in the dataset attributes
             if self.abscos_fit_result.success:
-                self.fit_results_dataset.attrs.update({
+                self.abscos_fit_result_dict = {
                     'abscos_amplitude': self.abscos_fit_result.params['amplitude'].value,
                     'abscos_frequency': self.abscos_fit_result.params['frequency'].value,
                     'abscos_phase': self.abscos_fit_result.params['phase'].value,
                     'abscos_fit_success': True,
                     'abscos_chisqr': self.abscos_fit_result.chisqr,
                     'abscos_redchi': self.abscos_fit_result.redchi
-                })
+                }
+                self.fit_results_dataset.attrs.update(self.abscos_fit_result_dict)
             else:
                 self.fit_results_dataset.attrs['abscos_fit_success'] = False
                 
@@ -233,7 +236,7 @@ class ChargeGateRamseyAnalysis:
 # --- Test code ---
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    ds = load_xarray_h5(r"d:\data\MIST\20251124\#2649_LCH_charge_gate_ramsey_162408\ds_raw.h5")
+    ds = load_xarray_h5(r"d:\github\ASQMDriver\data\MIST\2025-12-01\#2750_LCH_charge_gate_ramsey_163341\ds_raw.h5")
     # print(ds)
     sep_data = repetition_data(ds, repetition_dim="qubit")
     for sqdata in sep_data:

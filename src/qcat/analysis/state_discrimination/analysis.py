@@ -49,18 +49,13 @@ class StateDiscrimination():
 
 
     def _preprocess_data(self, bins=20):
-        # Compute mean and std for initialization (in original units)
-        mean_I = self.data['I'].mean(dim='shot_idx').values
-        mean_Q = self.data['Q'].mean(dim='shot_idx').values
+        # Compute std for initialization (in original units)
         prepared_state_num = self.data.coords['prepared_state'].size
-        mean_init = []
         std_init = []
         std_I = self.data['I'].std(dim='shot_idx').values
         std_Q = self.data['Q'].std(dim='shot_idx').values
         for i in range(prepared_state_num):
-            mean_init.append(np.array([mean_I[i], mean_Q[i]]))
             std_init.append(np.array([std_I[i], std_Q[i]]))
-        self.mean_init = np.array(mean_init)
         self.std_init = np.min(np.array(std_init))
 
         # Compute 2D histograms for each prepared_state and build a dataset
@@ -73,7 +68,7 @@ class StateDiscrimination():
 
         # Use std/5 as step for bins, prefer user_std if set
         std_val = self.user_std if self.user_std is not None else self.std_init
-        step = std_val / 5
+        step = std_val / 3
         # Ensure step is positive and not too small
         if step <= 0:
             step = 1e-3
@@ -89,6 +84,7 @@ class StateDiscrimination():
         bins_x = len(xcenters)
         bins_y = len(ycenters)
         density_arr = np.zeros((len(prepared_states),bins_y,  bins_x))
+        mean_init = []
         for i, state in enumerate(prepared_states):
             I = self.data['I'].sel(prepared_state=state).values
             Q = self.data['Q'].sel(prepared_state=state).values
@@ -96,6 +92,14 @@ class StateDiscrimination():
                     # Plot density_all for visual inspection
 
             density_arr[i, :, :] = H.T
+            
+            # Find the coordinates of maximum value in H for mean_init
+            max_idx = np.unravel_index(np.argmax(H), H.shape)
+            max_I = xcenters[max_idx[0]]
+            max_Q = ycenters[max_idx[1]]
+            mean_init.append(np.array([max_I, max_Q]))
+        
+        self.mean_init = np.array(mean_init)
         self.hist_dataset = xr.Dataset(
             {'density': (['prepared_state', 'y', 'x'], density_arr)},
             coords={
@@ -254,7 +258,7 @@ class StateDiscrimination():
         fit_all_result, fit_all_fitter = self._fit_histogram_by_multi_2Dgaussian(
             density_all, x, y, mean=use_mean, std=use_std
         )
-        trained_multi_2Dgaussian_params = self._extract_multi_2Dgaussian_params(fit_all_fitter, n_gauss=len(self.mean_init))
+        trained_multi_2Dgaussian_params = self._extract_multi_2Dgaussian_params(fit_all_result, n_gauss=len(self.mean_init))
 
         return trained_multi_2Dgaussian_params
 
@@ -315,8 +319,14 @@ class StateDiscrimination():
         fitter = FitMultiGaussian2D(density, x, y, n_gauss=n_gauss)
         fitter.params['offset'].set(value=0, vary=False)
         for i in range(n_gauss):
-            fitter.params[f'g{i}_x0'].set(value=mean[i][0], vary=vary_mean)
-            fitter.params[f'g{i}_y0'].set(value=mean[i][1], vary=vary_mean)
+            if vary_mean:
+                # Allow parameters to vary with reasonable bounds
+                fitter.params[f'g{i}_x0'].set(value=mean[i][0], vary=True, max=mean[i][0]+std*0.5, min=mean[i][0]-std*0.5)
+                fitter.params[f'g{i}_y0'].set(value=mean[i][1], vary=True, max=mean[i][1]+std*0.5, min=mean[i][1]-std*0.5)
+            else:
+                # Fix the parameters if vary_mean is False
+                fitter.params[f'g{i}_x0'].set(value=mean[i][0], vary=False)
+                fitter.params[f'g{i}_y0'].set(value=mean[i][1], vary=False)
             # fitter.params[f'g{i}_amp'].set(value=np.max(density), vary=True)
             if i == 0:
                 fitter.params[f'g{i}_sigma_x'].set(value=std, vary=vary_std)

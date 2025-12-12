@@ -53,7 +53,7 @@ if __name__ == '__main__':
     from qcat.parser.qm_reader import load_xarray_h5
     from qcat.analysis.ac_stark_shift.visualization import Ac_stark_shift_plot
     # Load the dataset
-    file_path = r"d:\github\ASQMDriver\data\MIST\2025-09-09\#93_LCH_qubit_spectroscopy_vs_ROamp_223949\ds_raw.h5"
+    file_path = r"d:\data\MIST\20251201\#7937_LCH_qubit_spectroscopy_vs_ROamp_111032\ds_raw.h5"
     ds = load_xarray_h5(file_path)
     from qcat.parser.qm_reader import repetition_data
 
