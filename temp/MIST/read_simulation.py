@@ -237,7 +237,8 @@ if __name__ == "__main__":
                     print(f"  {str(data)[:500]}...")
             else:
                 print(f"  {str(data)[:500]}...")
-                
+            print(data["Ej"])
+            print(data["Ec"])
             # Detailed analysis of Hyper_data_0
             if isinstance(data, dict) and 'Hyper_data_0' in data:
                 print("\n=== Detailed analysis of Hyper_data_0 ===")
