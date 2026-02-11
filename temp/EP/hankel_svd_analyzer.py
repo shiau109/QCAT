@@ -278,9 +278,9 @@ class HankelSVDAnalyzer:
             # but i must be < n_comp_energy
             if n_total > 1:
                 ratios = s[:-1] / s[1:]  # s[i] / s[i+1]
-                valid_indices = np.where((ratios > np.e) & (np.arange(len(ratios)) < n_comp_energy))[0]
+                valid_indices = np.where((ratios > np.e/2) & (np.arange(len(ratios)) < n_comp_energy))[0]
                 if len(valid_indices) > 0:
-                    n_comp = valid_indices[-1] + 1  # +1 because we want number of components
+                    n_comp = valid_indices[-1] +1 # +1 because we want number of components
                 else:
                     n_comp = min(1, n_comp_energy + 1)  # fallback to energy method
             else:
