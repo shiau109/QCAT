@@ -45,7 +45,7 @@ def plot_hyper_data(data, data_key, save_path=None, figsize=(10, 8), cmap='virid
     # Plot the 2D data (no transpose needed now) with log scale
     im = ax.imshow(hyper_data, aspect='auto', origin='lower', 
                    extent=extent, cmap=cmap, interpolation='nearest',
-                   norm=LogNorm(vmin=1e-6, vmax=hyper_data.max()))
+                   norm=LogNorm(vmin=1e-2, vmax=hyper_data.max()))
     
     # Add colorbar
     cbar = fig.colorbar(im, ax=ax, label=f'{data_key} values (log scale)')
@@ -156,7 +156,7 @@ def plot_mirrored_hyper_data(data, data_key, save_path=None, figsize=(10, 8), cm
     # Plot the 2D data (no transpose needed now) with log scale
     im = ax.imshow(hyper_data, aspect='auto', origin='lower', 
                    extent=extent, cmap=cmap, interpolation='nearest',
-                   norm=LogNorm(vmin=1e-6, vmax=hyper_data.max()))
+                   norm=LogNorm(vmin=1e-2, vmax=hyper_data.max()))
     
     # Add colorbar
     cbar = fig.colorbar(im, ax=ax, label=f'{data_key} + mirrored values (log scale)')
@@ -198,7 +198,7 @@ def plot_mirrored_hyper_data(data, data_key, save_path=None, figsize=(10, 8), cm
 
 if __name__ == "__main__":
 # Path to the pickle file
-    pickle_file_path = r"d:\data\MIST\20251201\LCH_q1_data.pkl"
+    pickle_file_path = r"D:\SynologyDrive\LiChiehHsiao\AS\SynologyDrive\data\MIST\20251201\LCH_q1_data.pkl"
     norm_ac_shift = 166. /4912.0  # Example normalization factor shift/f_ro
     print(f"Normalization factor for AC shift: {norm_ac_shift}")
     # Check if file exists

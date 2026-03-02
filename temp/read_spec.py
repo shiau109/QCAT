@@ -5,8 +5,8 @@ from qcat.parser.qm_reader import load_xarray_h5
 import numpy as np
 import matplotlib.pyplot as plt
 # Folder to check
-folder_path = [r"d:\data\MIST\20251124\#2741_LCH_qubit_spectroscopy_173215",
-               r"d:\github\ASQMDriver\data\MIST\2025-11-28\#2743_LCH_qubit_spectroscopy_173520"]
+folder_path = [r"D:\SynologyDrive\LiChiehHsiao\AS\SynologyDrive\data\Qrakal\#276_LCH_qubit_spectroscopy_164353",
+               ]
 
 # Build paths
 fig, ax = plt.subplots(figsize=(10, 6))
