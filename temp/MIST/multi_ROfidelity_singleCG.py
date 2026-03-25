@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from qcat.analysis.readout_power.analysis import ROFidelityPower
 
 # Configuration
-base_dir = r'D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5'
+base_dir = r'D:\SynologyDrive\LiChiehHsiao\AS\SynologyDrive\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5'
 
 # assign_std = 0.000396
 # assign_mean = load_xarray_h5(r"D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5\ro_power_analysis_cg_0.410_amp_0.1_to_0.4\fit_mean.nc")
@@ -14,7 +14,7 @@ assign_std = None
 assign_mean = None
 
 # Input: specify the normalized_charge_gate value you want to analyze
-normalized_charge_gate_value = 0.41  # Change this value as needed
+normalized_charge_gate_value = 0.0  # Change this value as needed
 
 # Input: specify the amp_prefactor range to analyze (None = use all available values)
 amp_prefactor_min = 0.10  # Set to a number to limit minimum amp_prefactor (e.g., 0.5)

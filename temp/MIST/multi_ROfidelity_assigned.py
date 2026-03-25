@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from qcat.analysis.readout_power.analysis import ROFidelityPower
 from qcat.analysis.state_discrimination.analysis import StateDiscrimination
 
-base_dir = r'D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5'
+base_dir = r'D:\SynologyDrive\LiChiehHsiao\AS\SynologyDrive\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5'
 norm_ac_shift = 166 /4912.0  # Example normalization factor shift/f_ro
 charge_period = 0.460  # Volt
 print(f"Normalization factor for AC shift: {norm_ac_shift}")
@@ -15,12 +15,15 @@ print(f"Normalization factor for AC shift: {norm_ac_shift}")
 # Define the list of tuples (normalized_charge_gate, amp_prefactor) to analyze
 selected_points = [
     # Add your selected points here, for example:
-    (0.41, 1.0),
-    (0.41, 0.4),
-    (0.41, 0.2),
-    (0.35, 1.0),
-    (0.35, 0.4),
-    (0.35, 0.2),
+    # (0.41, 1.0),
+    # (0.41, 0.4),
+    # (0.41, 0.2),
+    # (0.35, 1.0),
+    # (0.35, 0.4),
+    # (0.35, 0.2),
+    (0.0, 1.0),
+    (0.0, 0.8),
+    (0.0, 0.6),
     # Add more tuples as needed
 ]
 
@@ -29,9 +32,9 @@ output_dir = os.path.join(base_dir, "selected_RO_fidelity")
 os.makedirs(output_dir, exist_ok=True)
 
 assign_std = 0.000396
-assign_mean = load_xarray_h5(r"D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5\ro_power_analysis_cg_0.410_amp_0.1_to_0.4\fit_mean.nc")
+# assign_mean = load_xarray_h5(r"D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5\ro_power_analysis_cg_0.410_amp_0.1_to_0.4\fit_mean.nc")
+assign_mean = None
 print(assign_mean)
-
 
 # merged_ds = xr.concat([prepare_0, prepare_1], dim='prepared_state')
 merged_ds = load_xarray_h5(os.path.join(base_dir, "final_readout_dataset.h5"))

@@ -8,11 +8,13 @@ from qcat.analysis.readout_power.analysis import ROFidelityPower
 
 
 
-base_dir = r'D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5\fixed'
+base_dir = r'D:\SynologyDrive\LiChiehHsiao\AS\SynologyDrive\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5'
 norm_ac_shift = 166 /4912.0  # Example normalization factor shift/f_ro
 charge_period = 0.460  # Volt
 print(f"Normalization factor for AC shift: {norm_ac_shift}")
 
+
+experiment_range = (0,50)  # Set to slice(start, stop) to select experiment subset, e.g. slice(0, 50). None = use all.
 
 assign_std = None#0.000396
 assign_mean = None#load_xarray_h5(r"D:\data\MIST\20251201\r_9_150x50_50_s300_ro_005x18_s100_fb\set_5\ro_power_analysis_cg_0.410_amp_0.1_to_0.4\fit_mean.nc")
@@ -28,7 +30,8 @@ for sq_data in qubit_datasets:
     qubit_name = sq_data["qubit"].values.item()
     
     # Check if summary file already exists first
-    summary_filename = os.path.join(base_dir, f'merged_summary_qubit_{qubit_name}.h5')
+    exp_suffix = f'_exp{experiment_range[0]}to{experiment_range[1]}' if experiment_range is not None else ''
+    summary_filename = os.path.join(base_dir, f'merged_summary_qubit_{qubit_name}{exp_suffix}.h5')
     
     if os.path.exists(summary_filename):
         print(f"Loading existing merged summary from: {summary_filename}")
@@ -40,6 +43,10 @@ for sq_data in qubit_datasets:
         
         for normalized_charge_gate in normalized_charge_gate_list:
             single_ds = sq_data.sel(normalized_charge_gate=normalized_charge_gate)
+            # Select experiment subset if specified
+            if experiment_range is not None and 'experiment' in single_ds.dims:
+                single_ds = single_ds.isel(experiment=slice(*experiment_range))
+                print(single_ds)
             # Stack experiment dimension into shot_idx to increase total shots
             if 'experiment' in single_ds.dims:
                 single_ds = single_ds.stack(extended_shot_idx=('experiment', 'shot_idx'))
@@ -91,7 +98,7 @@ for sq_data in qubit_datasets:
         ax.set_title(f'Qubit {qubit_name} State {state}: p_outlier (log scale)')
         fig.colorbar(im, ax=ax, label='log10(p_outlier)')
         fig.tight_layout()
-        fig.savefig(os.path.join(base_dir, f'p_outlier_2d_{qubit_name}_state{state}.png'))
+        fig.savefig(os.path.join(base_dir, f'p_outlier_2d_{qubit_name}_state{state}{exp_suffix}.png'))
         plt.show()
         plt.close(fig)
 
@@ -104,7 +111,7 @@ for sq_data in qubit_datasets:
         ax2.set_title(f'Qubit {qubit_name} State {state}: norm_res')
         fig2.colorbar(im2, ax=ax2, label='norm_res')
         fig2.tight_layout()
-        fig2.savefig(os.path.join(base_dir, f'norm_res_2d_{qubit_name}_state{state}.png'))
+        fig2.savefig(os.path.join(base_dir, f'norm_res_2d_{qubit_name}_state{state}{exp_suffix}.png'))
         plt.close(fig2)
 
         # std (standard deviation) - note: std doesn't depend on state
@@ -116,5 +123,5 @@ for sq_data in qubit_datasets:
         ax3.set_title(f'Qubit {qubit_name}: std')
         fig3.colorbar(im3, ax=ax3, label='std')
         fig3.tight_layout()
-        fig3.savefig(os.path.join(base_dir, f'std_2d_{qubit_name}.png'))
+        fig3.savefig(os.path.join(base_dir, f'std_2d_{qubit_name}{exp_suffix}.png'))
         plt.close(fig3)

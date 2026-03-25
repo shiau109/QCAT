@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from qcat.parser.qm_reader import load_xarray_h5, repetition_data
 from qcat.analysis.charge_gate_ramsey.analysis import ChargeGateRamseyAnalysis
+from qcat.analysis.readout_power.analysis import ROFidelityPower
 
 
 def plot_phase_values(results_df, output_folder=None, x_axis='index'):
@@ -47,14 +48,14 @@ def plot_phase_values(results_df, output_folder=None, x_axis='index'):
             earliest_time = successful_results['run_start_dt'].min()
             time_deltas = successful_results['run_start_dt'] - earliest_time
             x_data = time_deltas.dt.total_seconds() / 3600  # Convert to hours
-            x_label = 'Relative Time (hours from first experiment)'
-            plot_title = 'Phase × Frequency vs Relative Time'
+            x_label = 'Time (hr)'
+            # plot_title = 'Phase × Frequency vs Relative Time'
             save_name = 'ramsey_phase_freq_product_vs_relative_time.png'
     
     if x_axis == 'index':
         x_data = np.arange(len(successful_results))
         x_label = 'Folder Index'
-        plot_title = 'Phase × Frequency vs Folder Index'
+        # plot_title = 'Phase × Frequency vs Folder Index'
         save_name = 'ramsey_phase_freq_product_vs_index.png'
     
     # Get phases and frequencies, then multiply them
@@ -63,21 +64,25 @@ def plot_phase_values(results_df, output_folder=None, x_axis='index'):
     phase_freq_product = phases * frequencies
     
     # Color coding based on fit quality
-    colors = ['green' if chi < 1e-10 else 'orange' if chi < 1e-9 else 'red' 
-              for chi in successful_results['abscos_redchi']]
+    # colors = ['green' if chi < 1e-10 else 'orange' if chi < 1e-9 else 'red' 
+    #           for chi in successful_results['abscos_redchi']]
     
     # Create figure
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
+    fig, ax = plt.subplots(figsize=(6, 4))
+
+    ax.tick_params(labelsize=18)
+    ax.legend(fontsize=14)
     # Plot data
-    ax.scatter(x_data, phase_freq_product, c=colors, s=60, alpha=0.7, edgecolors='black', linewidth=0.5)
-    ax.plot(x_data, phase_freq_product, 'b--', alpha=0.5, linewidth=1, label='Phase × Frequency trend')
+    # ax.scatter(x_data, phase_freq_product, s=60, alpha=0.7, edgecolors='black', linewidth=0.5)
+
+    # ax.scatter(x_data, phase_freq_product, c=colors, s=60, alpha=0.7, edgecolors='black', linewidth=0.5)
+    ax.plot(x_data, phase_freq_product, 'b-', alpha=1, linewidth=2, label='Phase × Frequency trend')
     
-    ax.set_xlabel(x_label)
-    ax.set_ylabel('Phase × Frequency (V·Hz)')
-    ax.set_title(plot_title)
-    ax.grid(True, alpha=0.3)
-    ax.legend()
+    ax.set_xlabel(x_label, fontsize=18)
+    ax.set_ylabel('Offset Voltage', fontsize=18)
+    # ax.set_title(plot_title)
+    # ax.grid(True, alpha=0.3)
+    # ax.legend()
     
     # Handle x-tick labels based on x_axis choice
     if x_axis == 'index' and len(successful_results) <= 20:
@@ -86,12 +91,12 @@ def plot_phase_values(results_df, output_folder=None, x_axis='index'):
         ax.set_xticklabels(folder_labels, rotation=45, ha='right', fontsize=8)
     
     # Add color legend for fit quality
-    legend_elements = [
-        Patch(facecolor='green', label='Good fit (χ²/dof < 1e-10)'),
-        Patch(facecolor='orange', label='Fair fit (1e-10 ≤ χ²/dof < 1e-9)'),
-        Patch(facecolor='red', label='Poor fit (χ²/dof ≥ 1e-9)')
-    ]
-    ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.0, 1.0), fontsize=9)
+    # legend_elements = [
+    #     Patch(facecolor='green', label='Good fit (χ²/dof < 1e-10)'),
+    #     Patch(facecolor='orange', label='Fair fit (1e-10 ≤ χ²/dof < 1e-9)'),
+    #     Patch(facecolor='red', label='Poor fit (χ²/dof ≥ 1e-9)')
+    # ]
+    # ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.0, 1.0), fontsize=9)
     
     plt.tight_layout()
     
@@ -164,6 +169,8 @@ def plot_frequency_values(results_df, output_folder=None, x_axis='index'):
     ax.scatter(x_data, frequencies, c=colors, s=60, alpha=0.7, edgecolors='black', linewidth=0.5)
     ax.plot(x_data, frequencies, 'r--', alpha=0.5, linewidth=1, label='Frequency trend')
     
+    ax.tick_params(labelsize=18)
+    ax.legend(fontsize=14)
     ax.set_xlabel(x_label)
     ax.set_ylabel('AbsCos Frequency (Hz)')
     ax.set_title(plot_title)
@@ -243,7 +250,7 @@ def plot_phase_differences(results_df, output_folder=None, x_axis='index'):
             time_deltas = successful_results['run_start_dt'] - earliest_time
             time_hours = time_deltas.dt.total_seconds() / 3600  # Convert to hours
             x_data = time_hours.iloc[1:]  # Use times from second point of each pair
-            x_label = 'Relative Time (hours from first experiment)'
+            x_label = 'Time (hr)'
             plot_title = 'Phase × Frequency Difference vs Relative Time'
             save_name = 'ramsey_phase_freq_diff_vs_relative_time.png'
     
@@ -254,21 +261,23 @@ def plot_phase_differences(results_df, output_folder=None, x_axis='index'):
         save_name = 'ramsey_phase_freq_diff_vs_index.png'
     
     # Color coding based on fit quality (use colors from the second experiment in each pair)
-    colors = ['green' if chi < 1e-10 else 'orange' if chi < 1e-9 else 'red' 
-              for chi in successful_results['abscos_redchi'].iloc[1:]]
+    # colors = ['green' if chi < 1e-10 else 'orange' if chi < 1e-9 else 'red' 
+    #           for chi in successful_results['abscos_redchi'].iloc[1:]]
     
     # Create figure
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
+    fig, ax = plt.subplots(figsize=(6, 4))
+     
+    ax.tick_params(labelsize=18)
+    ax.legend(fontsize=14)   
     # Plot data
-    ax.scatter(x_data, phase_freq_diffs, c=colors, s=60, alpha=0.7, 
+    ax.scatter(x_data, phase_freq_diffs, s=10, alpha=0.7, 
                edgecolors='black', linewidth=0.5)
-    ax.plot(x_data, phase_freq_diffs, 'g--', alpha=0.5, linewidth=1, label='Phase × Frequency difference trend')
-    ax.axhline(y=0, color='black', linestyle='-', alpha=0.3, linewidth=1)  # Reference line at y=0
+    # ax.plot(x_data, phase_freq_diffs, 'g--', alpha=0.5, linewidth=1, label='Phase × Frequency difference trend')
+    # ax.axhline(y=0, color='black', linestyle='-', alpha=0.3, linewidth=1)  # Reference line at y=0
     
-    ax.set_xlabel(x_label)
-    ax.set_ylabel('Phase × Frequency Difference (V·Hz)')
-    ax.set_title(plot_title)
+    ax.set_xlabel(x_label, fontsize=18)
+    ax.set_ylabel('Offset Voltage Difference', fontsize=18)
+    # ax.set_title(plot_title, fontsize=18)
     ax.grid(True, alpha=0.3)
     ax.legend()
     
@@ -281,12 +290,12 @@ def plot_phase_differences(results_df, output_folder=None, x_axis='index'):
         ax.set_xticklabels(diff_labels, rotation=45, ha='right', fontsize=8)
     
     # Add color legend for fit quality
-    legend_elements = [
-        Patch(facecolor='green', label='Good fit (χ²/dof < 1e-10)'),
-        Patch(facecolor='orange', label='Fair fit (1e-10 ≤ χ²/dof < 1e-9)'),
-        Patch(facecolor='red', label='Poor fit (χ²/dof ≥ 1e-9)')
-    ]
-    ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.0, 1.0), fontsize=9)
+    # legend_elements = [
+    #     Patch(facecolor='green', label='Good fit (χ²/dof < 1e-10)'),
+    #     Patch(facecolor='orange', label='Fair fit (1e-10 ≤ χ²/dof < 1e-9)'),
+    #     Patch(facecolor='red', label='Poor fit (χ²/dof ≥ 1e-9)')
+    # ]
+    # ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.0, 1.0), fontsize=9)
     
     plt.tight_layout()
     
@@ -419,7 +428,7 @@ def plot_2d_frequency_map(results_df, output_folder=None):
                 freq_grid[i, j] = np.mean(all_frequencies[mask])
     
     # Create single plot with 2D heatmap
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(8, 6))
     
     # Plot 2D frequency heatmap as background
     im = ax.pcolormesh(charge_grid, folder_grid, freq_grid, shading='auto', cmap='viridis', alpha=0.8)
@@ -575,3 +584,168 @@ def plot_phase_histogram(results_df, output_folder=None, bins=20):
         print(f"Phase × Frequency histogram saved to: {plot_path}")
     
     return fig
+
+
+def run_ro_fidelity_analysis(base_dir, assign_std=None, assign_mean=None, qubit_index=0):
+    """
+    Run ROFidelityPower analysis on readout data and return per-qubit merged summaries.
+
+    Parameters
+    ----------
+    base_dir : str
+        Directory containing ``final_readout_dataset.h5``.
+    assign_std : float or None
+        User-specified std override for the analysis.
+    assign_mean : xr.Dataset or None
+        User-specified fit_mean override for the analysis.
+    qubit_index : int or None
+        Which qubit to analyse (index into ``repetition_data`` output).
+        Use ``None`` to analyse all qubits.
+
+    Returns
+    -------
+    dict[str, xr.Dataset]
+        Mapping of qubit name to its merged summary dataset.
+    """
+    merged_ds = load_xarray_h5(os.path.join(base_dir, "final_readout_dataset.h5"))
+    print(f"Merged dataset I shape: {merged_ds['I'].shape}")
+
+    qubit_datasets = repetition_data(merged_ds, repetition_dim="qubit")
+    if qubit_index is not None:
+        qubit_datasets = [qubit_datasets[qubit_index]]
+
+    results = {}
+    for sq_data in qubit_datasets:
+        qubit_name = sq_data["qubit"].values.item()
+        summary_filename = os.path.join(base_dir, f'merged_summary_qubit_{qubit_name}.h5')
+
+        if os.path.exists(summary_filename):
+            print(f"Loading existing merged summary from: {summary_filename}")
+            merged_summary = load_xarray_h5(summary_filename)
+        else:
+            print(f"Summary file not found. Performing analysis for qubit {qubit_name}...")
+            normalized_charge_gate_list = sq_data.coords["normalized_charge_gate"].values
+            summary_list = []
+
+            for normalized_charge_gate in normalized_charge_gate_list:
+                single_ds = sq_data.sel(normalized_charge_gate=normalized_charge_gate)
+                if 'experiment' in single_ds.dims:
+                    single_ds = single_ds.stack(extended_shot_idx=('experiment', 'shot_idx'))
+                    single_ds = single_ds.swap_dims({'extended_shot_idx': 'shot_idx'})
+                    total_shots = len(single_ds.shot_idx)
+                    single_ds = single_ds.assign_coords(shot_idx=np.arange(total_shots))
+                print(f"Processing charge gate {normalized_charge_gate:.3f}, "
+                      f"data shape: I={single_ds['I'].shape}, Q={single_ds['Q'].shape}")
+                analysis = ROFidelityPower(single_ds, user_std=assign_std, fit_mean=assign_mean)
+                analysis._start_analysis()
+                summary_ds = analysis.summary_dataset.expand_dims(
+                    {'normalized_charge_gate': [normalized_charge_gate]}
+                )
+                summary_list.append(summary_ds)
+
+            merged_summary = xr.concat(summary_list, dim='normalized_charge_gate')
+            merged_summary.to_netcdf(summary_filename, engine='h5netcdf')
+            print(f"Saved merged summary for qubit {qubit_name} to: {summary_filename}")
+
+        results[qubit_name] = merged_summary
+
+    return results
+
+
+def plot_ro_fidelity_2d(merged_summary, qubit_name, base_dir,
+                        norm_ac_shift, charge_period):
+    """
+    Plot 2D colormaps of p_outlier, norm_res and std from an ROFidelityPower summary.
+
+    Parameters
+    ----------
+    merged_summary : xr.Dataset
+        The merged summary dataset (output of ``run_ro_fidelity_analysis``).
+    qubit_name : str
+        Qubit identifier used in titles and file names.
+    base_dir : str
+        Directory where plots are saved.
+    norm_ac_shift : float
+        Normalization factor ``shift / f_ro`` applied to amp_prefactor axis.
+    charge_period : float
+        Charge gate period in Volts used to normalise the charge gate axis.
+
+    Returns
+    -------
+    list[matplotlib.figure.Figure]
+        All created figures.
+    """
+    amp_prefactor = merged_summary['amp_prefactor'].values
+    normalized_charge_gate = merged_summary['normalized_charge_gate'].values / (charge_period * 4)
+
+    X, Y = np.meshgrid((amp_prefactor ** 2) * norm_ac_shift, normalized_charge_gate)
+
+    figures = []
+    for state in [0, 1]:
+        # --- p_outlier ---
+        z = merged_summary['p_outlier'].sel(state=state).transpose(
+            'normalized_charge_gate', 'amp_prefactor').values
+
+        max_idx = np.unravel_index(np.argmax(z), z.shape)
+        print(f"State {state}: Max p_outlier = {z[max_idx]:.6f} "
+              f"at charge_gate = {normalized_charge_gate[max_idx[0]]:.4f}, "
+              f"amp_prefactor = {amp_prefactor[max_idx[1]]:.4f}")
+
+        z_log = np.log10(z)
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.tick_params(labelsize=16)
+        im = ax.pcolormesh(Y, X, z_log, cmap='viridis', vmin=-3, vmax=0, shading='auto')
+        ax.set_xlabel('Gate Charge', fontsize=18)
+        ax.set_ylabel('Resonator Photon Number', fontsize=18)
+        ax.set_title(f'Qubit {qubit_name} State {state}')
+        fig.colorbar(im, ax=ax, label='log10(p_outlier)')
+        fig.tight_layout()
+        fig.savefig(os.path.join(base_dir, f'p_outlier_2d_{qubit_name}_state{state}.png'))
+        figures.append(fig)
+
+        # --- norm_res ---
+        z2 = merged_summary['norm_res'].sel(state=state).transpose(
+            'normalized_charge_gate', 'amp_prefactor').values
+        fig2, ax2 = plt.subplots(figsize=(6, 4))
+        im2 = ax2.pcolormesh(Y, X, z2, cmap='RdBu_r', shading='auto')
+        ax2.set_xlabel('Gate Charge', fontsize=16)
+        ax2.set_ylabel('Resonator Photon Number', fontsize=16)
+        ax2.set_title(f'Qubit {qubit_name} State {state}: norm_res')
+        fig2.colorbar(im2, ax=ax2, label='norm_res')
+        fig2.tight_layout()
+        fig2.savefig(os.path.join(base_dir, f'norm_res_2d_{qubit_name}_state{state}.png'))
+        figures.append(fig2)
+
+    # --- std (state-independent) ---
+    std = merged_summary['std'].transpose('normalized_charge_gate', 'amp_prefactor').values
+    fig3, ax3 = plt.subplots(figsize=(6, 4))
+    im3 = ax3.pcolormesh(Y, X, std, cmap='plasma', shading='auto')
+    ax3.set_xlabel('Gate Charge', fontsize=16)
+    ax3.set_ylabel('Driving amp', fontsize=16)
+    ax3.set_title(f'Qubit {qubit_name}: std')
+    fig3.colorbar(im3, ax=ax3, label='std')
+    fig3.tight_layout()
+    fig3.savefig(os.path.join(base_dir, f'std_2d_{qubit_name}.png'))
+    figures.append(fig3)
+
+    return figures
+
+
+def save_figs_as_png(figs, save_dir, prefix="fig"):
+    """
+    Save a list of matplotlib figures as individual PNG files.
+
+    Parameters
+    ----------
+    figs : list[matplotlib.figure.Figure]
+        Figures to save.
+    save_dir : str
+        Directory to save the PNG files.
+    prefix : str
+        Filename prefix for each figure.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    for i, fig in enumerate(figs):
+        path = os.path.join(save_dir, f"{prefix}_{i}.png")
+        fig.savefig(path, dpi=150, bbox_inches='tight')
+    print(f"Saved {len(figs)} figures to {save_dir}")
